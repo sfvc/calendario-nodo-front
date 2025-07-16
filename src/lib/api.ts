@@ -8,8 +8,6 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   const res = await fetch(`${API_URL}${path}`, {
     method: options.method ?? 'GET',
     ...options,
-    mode: 'cors', // 👈 necesario para CORS cross-origin
-    credentials: 'include', // 👈 solo si usás cookies o necesitas headers auth
 
     headers: {
       'Content-Type': 'application/json',
