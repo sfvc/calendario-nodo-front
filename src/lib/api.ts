@@ -1,26 +1,34 @@
-const API_URL = import.meta.env.VITE_API_URL;
+import axios from 'axios';
 
-export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem("token");
-  if (options.method === 'PATCH') {
-    console.log('📦 PATCH BODY:', options.body);
+// Crear la instancia
+const api = axios.create({
+  baseURL: `${import.meta.env.VITE_API_URL}`
+});
+
+// Interceptores de request (opcional)
+api.interceptors.request.use(
+  (config) => {
+    // Agregar token si existe
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Interceptores de respuesta (opcional)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      localStorage.removeItem('accessToken')
+      window.location.href = '/login'
+    }
+    
+    return Promise.reject(error);
   }
-  const res = await fetch(`${API_URL}${path}`, {
-    method: options.method ?? 'GET',
-    ...options,
+);
 
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
-
-  if (!res.ok) {
-    const errorText = await res.text();
-    console.error('Error HTTP:', res.status, errorText);
-    throw new Error(`Error ${res.status}: ${errorText}`);
-  }
-  console.log('➡ URL final:', `${API_URL}${path}`);
-  return res.json();
-}
+export default api;

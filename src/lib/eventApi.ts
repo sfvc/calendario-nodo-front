@@ -1,43 +1,31 @@
-// src/lib/eventApi.ts
-import { api } from './api';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
+import type { CalendarEvent } from "@/types/event";
+import api from "./api";
+import { formattedEvent } from "./formattedEvent";
 const BASE_PATH = '/events';
 
 export const EventAPI = {
-  
-  getAll: async () => {
-  const data = await api<any[]>(BASE_PATH);
+  getAll: async (): Promise<CalendarEvent[]> => {
+    const response = await api.get(BASE_PATH);
 
-    return data.map(event => ({
-      ...event,
-      start: new Date(event.start),
-      end: new Date(event.end),
-    }));
+    const formatted = formattedEvent(response?.data)
+    return formatted
   },
 
-  create: async (data: any) => {
-    return api<any>(BASE_PATH, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+  create: async (data: any): Promise<CalendarEvent> => {
+    return api.post(BASE_PATH, data);
   },
 
-
-
-  update: async (id: string, data: any) => {
-    return api<any>(`${BASE_PATH}/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    });
+  update: async (id: string, data: any): Promise<CalendarEvent> => {
+    return api.patch(`${BASE_PATH}/${id}`, data);
   },
 
   remove: async (id: string) => {
-    return api<void>(`${BASE_PATH}/${id}`, {
-      method: 'DELETE',
-    });
+    return api.delete(`${BASE_PATH}/${id}`);
   },
 
-  getById: async (id: string) => {
-    return api<any>(`${BASE_PATH}/${id}`);
+  getById: async (id: string): Promise<CalendarEvent[]> => {
+    return api.get(`${BASE_PATH}/${id}`);
   },
 };

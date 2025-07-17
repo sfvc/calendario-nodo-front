@@ -1,13 +1,20 @@
 // src/App.tsx
-import React from 'react';
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 import LoginForm from './pages/Login';
 import { EventCalendar } from './components/calendar';
 import UserCreateForm from './pages/CreateUser';
+import { useAuth } from './context';
 
-const App: React.FC = () => {
+const App = () => {
+  const { checkToken } = useAuth()
+
+  useEffect(() => {
+    checkToken()
+  }, [])
+
   return (
     <BrowserRouter>
       <Routes>

@@ -10,8 +10,6 @@ import { Label } from "../components/ui/Label"
 import { Input } from "../components/ui/Input"
 import { Button } from "../components/ui/Button"
 import { Eye, EyeOff, Lock, Mail, User } from "../components/Icons"
-import { Alert } from "../components/ui/Alert"
-import { useNavigate } from "react-router-dom"
 
 interface UserCreateFormData {
   email: string
@@ -25,7 +23,6 @@ export default function UserCreateForm() {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [alert, setAlert] = useState<{ type: "success" | "error"; message: string } | null>(null)
 
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,7 +36,6 @@ export default function UserCreateForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setAlert(null)
 
     try {
       const res = await fetch("http://localhost:3000/users", {
@@ -56,14 +52,12 @@ export default function UserCreateForm() {
       }
 
       await res.json()
-      setAlert({ type: "success", message: "✅ Usuario creado correctamente" })
       setFormData({ email: "", password: "" })
 
       // Opcional: redirigir o mantener en la misma página
       // navigate("/admin/users")
     } catch (error: any) {
       console.error("Error creando usuario:", error)
-      setAlert({ type: "error", message: error.message || "❌ Ocurrió un error" })
     } finally {
       setIsLoading(false)
     }
@@ -135,14 +129,6 @@ export default function UserCreateForm() {
                   </button>
                 </div>
               </div>
-
-              {alert && (
-                <Alert
-                  type={alert.type}
-                  message={alert.message}
-                  onClose={() => setAlert(null)}
-                />
-              )}
 
               <Button
                 type="submit"

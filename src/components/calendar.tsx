@@ -1,182 +1,93 @@
-import React, { useEffect, useState } from "react"
-import FullCalendar, { DateSelectArg, EventClickArg } from "@fullcalendar/react"
+import { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
+import { Calendar } from "lucide-react"
+import FullCalendar from "@fullcalendar/react"
 import dayGridPlugin from "@fullcalendar/daygrid"
 import interactionPlugin from "@fullcalendar/interaction"
+import { useAuth } from "../context"
+import { Button } from "@/components/ui/Button"
+import { EventModal } from "@/components/event-modal"
 import { EventAPI } from "../lib/eventApi"
-import { Button } from "./ui/Button"
-import { EventModal } from "./event-modal"
-import type { CalendarEvent } from "../types/event"
-import { useAuth } from "../context/AuthContext"
-import { EventStatus } from "../types/event.enum"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
+import type { DateSelectArg, EventClickArg } from "@fullcalendar/core/index.js"
+import type { CalendarEvent, EventResponse } from "@/types/event"
 
 export function EventCalendar() {
   const [events, setEvents] = useState<CalendarEvent[]>([])
-  const [modalOpen, setModalOpen] = useState(false)
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
-  const [selectedDate, setSelectedDate] = useState<string | undefined>()
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const { userId, userEmail, userRole, logout } = useAuth()
-
-  useEffect(() => {
-    const token = localStorage.getItem("token")
-    setIsAuthenticated(!!token)
-  }, [])
-
-  useEffect(() => {
-    console.log("🔐 Auth data:", { userEmail, userRole, userId });
-  }, [userEmail, userRole]);
+  const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null)
+  const { user, logout } = useAuth()
+  const [isOpen, setIsOpen] = useState<boolean>(false)
 
   // Cargar eventos cuando cambia la autenticación
   useEffect(() => {
     const loadEvents = async () => {
       try {
         const data = await EventAPI.getAll()
-        const formatted = data.map((e: any) => ({
-          id: e.id,
-          title: e.title,
-          start: e.start,
-          end: e.end,
-          description: e.description || "",
-          color: e.color || "#3b82f6",
-          allDay: e.allDay ?? true,
-          status: e.status,
-          type: e.type,
-          userId: e.userId,
-        }))
-        setEvents(formatted)
+        setEvents(data)
       } catch (error) {
         console.error("Error cargando eventos:", error)
-        alert("Error al cargar los eventos")
       }
     }
 
     loadEvents()
   }, [])
 
-  const handleLogout = () => {
-    localStorage.removeItem("token")
-    setIsAuthenticated(false)
-    logout()
-    window.location.reload()
-  }
-
-  // 🔄 Guardar o actualizar evento
-  const handleSave = async (event: CalendarEvent) => {
-    try {
-      if (!event.title) {
-        alert("El título del evento es requerido");
-        return;
-      }
-
-      const startDate = new Date(event.start);
-      const endDate = new Date(event.end);
-
-      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        throw new Error('Fechas inválidas');
-      }
-
-      const payload = {
-        title: event.title,
-        description: event.description || "",
-        start: selectedDate ? `${selectedDate}T00:00:00` : startDate.toISOString(),
-        end: selectedDate ? `${selectedDate}T23:59:59` : endDate.toISOString(),   
-        color: event.color || "#3b82f6",
-        allDay: event.allDay ?? false,
-        status: event.status || EventStatus.ESPERANDO_RTA,
-        userId: userEmail,
-      };
-
-      console.log("Enviando payload:", payload);
-
-      let saved;
-      if (event.id && events.some(e => e.id === event.id)) {
-        // Actualizar evento existente
-        saved = await EventAPI.update(event.id, payload);
-      } else {
-        // Crear nuevo evento
-        saved = await EventAPI.create(payload);
-      }
-
-      console.log('Respuesta del servidor:', saved); // Verifica que recibes datos aquí
-
-      const newEvent: CalendarEvent = {
-        id: saved.id,
-        title: saved.title,
-        start: saved.start,
-        end: saved.end,
-        description: saved.description,
-        color: saved.color || "#3b82f6",
-        allDay: saved.allDay ?? true,
-        status: saved.status,
-        type: saved.type,
-        userId: saved.userId,
-      };
-
-      setEvents(prev => 
-        event.id 
-          ? prev.map(e => e.id === event.id ? newEvent : e) 
-          : [...prev, newEvent]
-      );
-      
-      return saved; // ← Esto es crucial para que el modal reciba la respuesta
-    } catch (err) {
-      console.error("Error al guardar:", err);
-      throw err; // Propaga el error para que el modal lo maneje
-    }
-  };
-
   const handleDelete = async (id: string) => {
     try {
       if (window.confirm("¿Estás seguro de eliminar este evento?")) {
         await EventAPI.remove(id)
         setEvents(prev => prev.filter(e => e.id !== id))
-        setModalOpen(false)
+        setIsOpen(false)
       }
     } catch (err) {
       console.error("Error al eliminar:", err)
-      alert("Error al eliminar el evento")
     }
   }
 
   const handleDateSelect = (selectInfo: DateSelectArg) => {
-    setSelectedDate(selectInfo.startStr)
     setSelectedEvent(null)
-    setModalOpen(true)
+    setIsOpen(true)
     selectInfo.view.calendar.unselect()
   }
 
-  const handleEventClick = (clickInfo: EventClickArg) => {
-    const e = events.find(ev => ev.id === clickInfo.event.id)
-    if (e) {
-      setSelectedEvent(e)
-      setModalOpen(true)
-    }
+  const handleEventClick = (e: EventClickArg) => {
+    const fullEvent = {
+      id: e.event.id,
+      title: e.event.title,
+      start: e.event.start?.toISOString().slice(0, 10),
+      end: e.event.end?.toISOString().slice(0, 10),
+      allDay: e.event.allDay,
+      color: e.event.backgroundColor,
+      ...e.event.extendedProps,
+    } as EventResponse
+
+    setSelectedEvent(fullEvent)
+    setIsOpen(true)
   }
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <div className="w-[100%]">
+        <div className="w-full">
           <h1 className="text-2xl font-bold">Calendario de Eventos</h1>
-            {userEmail ? (
-              <div className="w-[100%] pt-4">
+            {user?.email ? (
+              <div className="w-full pt-4">
                 <p className="text-gray-600 mt-1">
-                  Bienvenido, <span className="font-semibold">{userEmail}</span>
+                  Bienvenido, <span className="font-semibold">{user.email}</span>
                 </p>
 
                 <div className="flex items-center justify-between pt-4 mb-4">
                   <Button
                     className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded shadow"
                     onClick={() => {
-                      setSelectedDate(new Date().toISOString().split("T")[0]);
                       setSelectedEvent(null);
-                      setModalOpen(true);
+                      setIsOpen(true);
                     }}
                   >
                     Crear Evento
                   </Button>
 
-                  {userRole === "ADMIN" && (
+                  {user?.role === "ADMIN" && (
                     <a
                       className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow"
                       href="/user"
@@ -186,7 +97,7 @@ export function EventCalendar() {
                   )}
 
                   <Button
-                    onClick={handleLogout}
+                    onClick={logout}
                     className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow"
                   >
                     Cerrar sesión
@@ -195,12 +106,12 @@ export function EventCalendar() {
               </div>
             ) : (
               <div className="flex justify-end pt-4 mb-4">
-                <a
-                  href="/login"
+                <Link
+                  to="/login"
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow"
                 >
                   Iniciar sesión
-                </a>
+                </Link>
               </div>
             )}
         </div>
@@ -224,14 +135,23 @@ export function EventCalendar() {
         timeZone="local"
       />
 
-      <EventModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSave={handleSave}
-        onDelete={selectedEvent ? handleDelete : undefined}
-        event={selectedEvent}
-        selectedDate={selectedDate}
-      />
+      <Dialog open={isOpen} onOpenChange={() => setIsOpen(false)}>
+        <DialogContent className="lg:min-w-[900px] max-h-5/6 overflow-y-scroll">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Calendar className="h-5 w-5" /> 
+              {selectedEvent ? "Editar Evento" : "Crear Evento"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <EventModal
+            isOpen={isOpen}
+            onClose={() => setIsOpen(false)}
+            onDelete={selectedEvent ? handleDelete : undefined}
+            event={selectedEvent}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

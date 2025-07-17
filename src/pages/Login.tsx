@@ -10,23 +10,17 @@ import { Label } from "../components/ui/Label"
 import { Input } from "../components/ui/Input"
 import { Button } from "../components/ui/Button"
 import { Eye, EyeOff, Lock, Mail, User } from "../components/Icons"
-import { Alert } from "../components/ui/Alert"
 import { useNavigate } from "react-router-dom"
-import { useAuth } from "../context/authContext"
-
-interface LoginFormData {
-  email: string
-  password: string
-}
+import { useAuth } from "@/context"
+import type { LoginForm } from "@/context/auth-types"
 
 export default function LoginForm() {
-  const [formData, setFormData] = useState<LoginFormData>({
+  const [formData, setFormData] = useState<LoginForm>({
     email: "",
     password: "",
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [alert, setAlert] = useState<{ type: "success" | "error"; message: string } | null>(null)
 
   const navigate = useNavigate()
   const { login } = useAuth()
@@ -39,37 +33,10 @@ export default function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setAlert(null)
 
-    try {
-      const res = await fetch("http://localhost:3000/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      })
-
-      if (!res.ok) {
-        throw new Error("Credenciales inválidas")
-      }
-
-      const data = await res.json()
-      console.log("Respuesta del login:", data)
-
-      const { token, user } = data
-      const { email, role, id } = user
-
-      login(token, email, role, id) // ✅ Pasamos UUID correctamente
-
-      setAlert({ type: "success", message: "✅ Sesión iniciada correctamente" })
-      navigate("/")
-    } catch (error) {
-      console.error("Error de login:", error)
-      setAlert({ type: "error", message: "❌ Credenciales inválidas" })
-    } finally {
-      setIsLoading(false)
-    }
+    await login(formData)
+    navigate("/")
+    setIsLoading(false)
   }
 
   return (
@@ -134,14 +101,6 @@ export default function LoginForm() {
                   </button>
                 </div>
               </div>
-
-              {alert && (
-                <Alert
-                  type={alert.type}
-                  message={alert.message}
-                  onClose={() => setAlert(null)}
-                />
-              )}
 
               <div className="flex flex-wrap justify-center items-center gap-4 mt-6">
                 <Button
