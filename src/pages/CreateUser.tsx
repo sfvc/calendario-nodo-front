@@ -10,6 +10,7 @@ import { Label } from "../components/ui/Label"
 import { Input } from "../components/ui/Input"
 import { Button } from "../components/ui/Button"
 import { Eye, EyeOff, Lock, Mail, User } from "../components/Icons"
+import { toast } from "sonner"
 
 interface UserCreateFormData {
   email: string
@@ -23,7 +24,6 @@ export default function UserCreateForm() {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -48,16 +48,20 @@ export default function UserCreateForm() {
 
       if (!res.ok) {
         const err = await res.json()
-        throw new Error(err.message || "Error al crear usuario")
+        const errorMessage = err.message || "Error al crear usuario"
+        throw new Error(errorMessage)
       }
 
       await res.json()
       setFormData({ email: "", password: "" })
-
-      // Opcional: redirigir o mantener en la misma página
-      // navigate("/admin/users")
+      toast.success("Usuario creado exitosamente")
     } catch (error: any) {
       console.error("Error creando usuario:", error)
+      if (error.message.includes("email ya registrado")) {
+        toast.error("Este correo ya está registrado.")
+      } else {
+        toast.error(error.message || "Ocurrió un error al crear el usuario.")
+      }
     } finally {
       setIsLoading(false)
     }
@@ -144,12 +148,12 @@ export default function UserCreateForm() {
                   "Crear usuario"
                 )}
               </Button>
-                <a
-                  href="/"
-                  className="h-12 px-6 w-full bg-green-600 hover:bg-green-700 text-white rounded-lg inline-flex items-center justify-center"
-                >
-                  Volver a inicio
-                </a>
+              <a
+                href="/"
+                className="h-12 px-6 w-full bg-green-600 hover:bg-green-700 text-white rounded-lg inline-flex items-center justify-center"
+              >
+                Volver a inicio
+              </a>
             </form>
           </CardContent>
         </Card>
