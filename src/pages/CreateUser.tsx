@@ -144,7 +144,12 @@ export default function UserCreateForm() {
                   "Crear usuario"
                 )}
               </Button>
-              a
+                <a
+                  href="/"
+                  className="h-12 px-6 w-full bg-green-600 hover:bg-green-700 text-white rounded-lg inline-flex items-center justify-center"
+                >
+                  Volver a inicio
+                </a>
             </form>
           </CardContent>
         </Card>

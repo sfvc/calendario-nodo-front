@@ -10,6 +10,7 @@ import { EventStatus } from "@/types/event.enum";
 import { colorOptions } from "@/constants/colors-options";
 import type { EventFormData, EventResponse } from "@/types/event";
 import { EventAPI } from '@/lib/eventApi';
+import { toast } from "sonner"
 
 interface Props {
 	event: EventResponse | null
@@ -53,20 +54,29 @@ export const EventForm = (
 	});
 
 	const onSubmit = async (form: EventFormData) => {
-		if (!user) return
+	if (!user) return
 
-		const data = {
-			...form,
-			start: new Date(form.start).toISOString(),
-			end: new Date(form.end).toISOString()
-		}
+	const data = {
+		...form,
+		start: new Date(form.start).toISOString(),
+		end: new Date(form.end).toISOString(),
+	}
 
+	try {
 		if (event) {
-      await EventAPI.update(event.id, data);
-    } else {
-      await EventAPI.create(data);
+		await EventAPI.update(event.id, data)
+		toast.success("✅ Evento actualizado correctamente")
+		} else {
+		await EventAPI.create(data)
+		toast.success("✅ Evento creado correctamente")
 		}
-	};
+
+		handleClose() // 👉 Cierra el modal al finalizar exitosamente
+	} catch (error) {
+		console.error("Error al guardar el evento:", error)
+		toast.error("❌ Ocurrió un error al guardar el evento")
+	}
+	}
 
 	const handleClose = () => {
     form.reset();
