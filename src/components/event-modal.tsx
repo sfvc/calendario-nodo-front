@@ -17,8 +17,9 @@ export function EventModal({
   event,
 }: EventModalProps) {
   const { user } = useAuth();
-  const isOwner = event?.userId === user?.id;
-  const canEdit = isOwner || user?.role === "ADMIN";
+  const isAdmin = user?.role === "ADMIN";
+  const isUser = user?.role === "USER";
+  const canEdit = isUser || isAdmin;
   const isReadOnly = !!event && !canEdit;
   const isEditing = !!event;
 

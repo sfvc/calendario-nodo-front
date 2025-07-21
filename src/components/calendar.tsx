@@ -24,24 +24,45 @@ export function EventCalendar() {
     setIsLoading(true);
     try {
       const data = await EventAPI.getAll();
+
       const adjustedEvents = data.map(event => {
-        // Asegura que las fechas mantengan la información horaria
-        const startDate = new Date(event.start);
-        const endDate = event.end ? new Date(event.end) : null;
-        // Para eventos que no son de todo el día, mantenemos la hora exacta
-        const isAllDay = !event.start.includes('T');
+        let startDate = new Date(event.start);
+        let endDate = event.end ? new Date(event.end) : null;
+
+        const isAllDay = event.allDay ?? !event.start.includes("T");
+
+        const isStartMidnight = startDate.getUTCHours() === 0 &&
+          startDate.getUTCMinutes() === 0 &&
+          startDate.getUTCSeconds() === 0;
+
+        const isEndMidnight = endDate &&
+          endDate.getUTCHours() === 0 &&
+          endDate.getUTCMinutes() === 0 &&
+          endDate.getUTCSeconds() === 0;
+
+        // Si el start es medianoche UTC, sumamos horas para corregir visualización en zona local
+        if (isStartMidnight) {
+          startDate.setUTCHours(startDate.getUTCHours() + 3); // Ajusta según tu zona horaria
+        }
+
+        // Si el evento NO es allDay pero termina a medianoche exacta, le sumamos 1 día
+        if (!isAllDay && endDate && isEndMidnight) {
+          endDate.setUTCDate(endDate.getUTCDate() + 1);
+        }
+
         return {
           ...event,
-          start: startDate.toISOString(), // Siempre usar ISO string con hora
+          start: startDate.toISOString(),
           end: endDate ? endDate.toISOString() : undefined,
           allDay: isAllDay,
-          display: 'auto'
+          display: 'auto',
         };
       });
-      // Ordena los eventos por hora de inicio
-      adjustedEvents.sort((a, b) => 
+
+      adjustedEvents.sort((a, b) =>
         new Date(a.start).getTime() - new Date(b.start).getTime()
       );
+
       setEvents(adjustedEvents);
     } catch (error) {
       console.error("Error cargando eventos:", error);
