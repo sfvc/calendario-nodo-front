@@ -18,16 +18,38 @@ export function EventCalendar() {
   const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null)
   const { user, logout } = useAuth()
   const [isOpen, setIsOpen] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const loadEvents = async () => {
+    setIsLoading(true);
     try {
-      const data = await EventAPI.getAll()
-      setEvents(data)
+      const data = await EventAPI.getAll();
+      const adjustedEvents = data.map(event => {
+        // Asegura que las fechas mantengan la información horaria
+        const startDate = new Date(event.start);
+        const endDate = event.end ? new Date(event.end) : null;
+        // Para eventos que no son de todo el día, mantenemos la hora exacta
+        const isAllDay = !event.start.includes('T');
+        return {
+          ...event,
+          start: startDate.toISOString(), // Siempre usar ISO string con hora
+          end: endDate ? endDate.toISOString() : undefined,
+          allDay: isAllDay,
+          display: 'auto'
+        };
+      });
+      // Ordena los eventos por hora de inicio
+      adjustedEvents.sort((a, b) => 
+        new Date(a.start).getTime() - new Date(b.start).getTime()
+      );
+      setEvents(adjustedEvents);
     } catch (error) {
-      console.error("Error cargando eventos:", error)
-      toast.error("❌ No se pudieron cargar los eventos")
+      console.error("Error cargando eventos:", error);
+      toast.error("No se pudieron cargar los eventos");
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleDelete = async (id: string) => {
     try {
@@ -152,6 +174,7 @@ export function EventCalendar() {
             dayHeaderClassNames="bg-gray-100 text-gray-700 font-medium"
             dayCellClassNames="hover:bg-gray-50 transition-colors"
             eventClassNames="cursor-pointer hover:opacity-90 transition-opacity"
+
           />
         </div>
       </div>
