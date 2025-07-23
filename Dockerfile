@@ -6,12 +6,8 @@ WORKDIR /app
 
 
 ARG VITE_API_URL
-ARG VITE_TEMPLATE_URL
-ARG VITE_CARBONE_URL
 
 ENV VITE_API_URL=$VITE_API_URL
-ENV VITE_TEMPLATE_URL=$VITE_TEMPLATE_URL
-ENV VITE_CARBONE_URL=$VITE_CARBONE_URL
 
 # Copiar archivos de configuración e instalación de dependencias
 # Copiar el resto del código
