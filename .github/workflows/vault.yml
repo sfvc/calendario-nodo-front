@@ -62,12 +62,12 @@ jobs:
               git checkout main
               git pull
               echo "Repository downloaded successfully."            
-              docker stop front_asistencia_nodo || true
-              docker rm front_asistencia_nodo || true
-              docker rmi municipalidad/front_asistencia_nodo:latest || true
+              docker stop front_calendario_nodo || true
+              docker rm front_calendario_nodo || true
+              docker rmi municipalidad/front_calendario_nodo:latest || true
               docker build \
                 --build-arg VITE_API_URL='${{ secrets.VITE_API_URL }}' \
-                -t municipalidad/front_asistencia_nodo:latest .
-              docker run -d --restart=always -p 0.0.0.0:3001:80 --name front_asistencia_nodo municipalidad/front_asistencia_nodo:latest
-              docker logs front_asistencia_nodo
+                -t municipalidad/front_calendario_nodo:latest .
+              docker run -d --restart=always -p 0.0.0.0:3001:80 --name front_calendario_nodo municipalidad/front_calendario_nodo:latest
+              docker logs front_calendario_nodo
               exit
