@@ -11,6 +11,7 @@ import { Input } from "../components/ui/Input"
 import { Button } from "../components/ui/Button"
 import { Eye, EyeOff, Lock, Mail, User } from "../components/Icons"
 import { toast } from "sonner"
+import api from "../lib/api" // axios instance using VITE_API_URL
 
 interface UserCreateFormData {
   email: string
@@ -38,29 +39,22 @@ export default function UserCreateForm() {
     setIsLoading(true)
 
     try {
-      const res = await fetch("http://localhost:3000/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      })
+      const res = await api.post("/users", formData)
 
-      if (!res.ok) {
-        const err = await res.json()
-        const errorMessage = err.message || "Error al crear usuario"
-        throw new Error(errorMessage)
-      }
-
-      await res.json()
       setFormData({ email: "", password: "" })
       toast.success("Usuario creado exitosamente")
     } catch (error: any) {
       console.error("Error creando usuario:", error)
-      if (error.message.includes("email ya registrado")) {
+
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Ocurrió un error al crear el usuario."
+
+      if (message.includes("email ya registrado")) {
         toast.error("Este correo ya está registrado.")
       } else {
-        toast.error(error.message || "Ocurrió un error al crear el usuario.")
+        toast.error(message)
       }
     } finally {
       setIsLoading(false)
