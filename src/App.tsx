@@ -7,6 +7,8 @@ import LoginForm from './pages/Login';
 import { EventCalendar } from './components/calendar';
 import UserCreateForm from './pages/CreateUser';
 import { useAuth } from './context';
+import EstadosEventosPage from './pages/EventStatus';
+import LockScreen from './pages/LockScreen';
 
 const App = () => {
   const { checkToken } = useAuth()
@@ -16,15 +18,18 @@ const App = () => {
   }, [])
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<LoginForm />} />
-        <Route path="/calendario" element={< EventCalendar />} />
-        <Route path="/no" element={<NotFound />} />
-        <Route path="/user" element={<UserCreateForm/>} />
-      </Routes>
-    </BrowserRouter>
+    <LockScreen>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<LoginForm />} />
+          <Route path="/calendario" element={< EventCalendar />} />
+          <Route path="/no" element={<NotFound />} />
+          <Route path="/user" element={<UserCreateForm/>} />
+          <Route path="/estados" element={<EstadosEventosPage/>} />
+        </Routes>
+      </BrowserRouter>
+    </LockScreen>
   );
 };
 

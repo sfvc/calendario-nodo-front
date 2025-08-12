@@ -1,4 +1,3 @@
-import type { EventStatus } from "./event.enum"
 
 export interface EventResponse {
   id: string
@@ -10,7 +9,7 @@ export interface EventResponse {
   
   // Propiedades extendidas
   description: string
-  status: EventStatus
+  status: string
   userId: string
   organizacion: string
   dia_y_horario: string
@@ -27,7 +26,7 @@ export interface EventFormData {
   description?: string;
   color: string;
   allDay: boolean;
-  status: EventStatus;
+  status: string;
   organizacion: string;
   dia_y_horario: string;
   cantidadPersonas: number;
@@ -48,7 +47,7 @@ export interface CalendarEvent {
   // Propiedades extendidas
   extendedProps: {
     description: string
-    status: EventStatus
+    status: string
     userId: string
     organizacion: string
     dia_y_horario: string

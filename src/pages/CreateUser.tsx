@@ -62,12 +62,12 @@ export default function UserCreateForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br p-4" style={{ backgroundColor: "#f0fdff" }}>
       <div className="w-full max-w-md">
         <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader className="space-y-4 pb-8">
             <div className="flex justify-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-r botonazul rounded-full flex items-center justify-center shadow-lg">
                 <User className="w-8 h-8 text-white" />
               </div>
             </div>
@@ -96,7 +96,7 @@ export default function UserCreateForm() {
                     placeholder="nuevo@ejemplo.com"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="pl-10 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                    className="pl-10 h-12 botonazul transition-colors"
                     required
                   />
                 </div>
@@ -131,7 +131,7 @@ export default function UserCreateForm() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+                className="w-full h-12 bg-gradient-to-r botonazul hover:from-blue-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
               >
                 {isLoading ? (
                   <div className="flex items-center space-x-2">
@@ -144,7 +144,8 @@ export default function UserCreateForm() {
               </Button>
               <a
                 href="/"
-                className="h-12 px-6 w-full bg-green-600 hover:bg-green-700 text-white rounded-lg inline-flex items-center justify-center"
+                className="h-12 px-6 w-full rounded-lg inline-flex items-center justify-center
+                          text-blue-400"
               >
                 Volver a inicio
               </a>

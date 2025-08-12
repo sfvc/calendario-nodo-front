@@ -1,4 +1,3 @@
-import { EventStatus } from '@/types/event.enum';
 import * as z from 'zod';
 
 export const eventFormSchema = z.object({
@@ -8,7 +7,7 @@ export const eventFormSchema = z.object({
   description: z.string().optional(),
   color: z.string().regex(/^#[0-9A-F]{6}$/i, 'Formato de color inválido'),
   allDay: z.boolean(),
-  status: z.nativeEnum(EventStatus),
+  status: z.string().min(1, 'El título es requerido').max(100, 'El título no puede exceder 100 caracteres'),
   organizacion: z.string().min(1, 'La organización es requerida'),
   dia_y_horario: z.string().min(1, 'El día y horario son requeridos'),
   cantidadPersonas: z.number().min(1, 'Debe haber al menos 1 persona').max(1000, 'Número máximo de personas es 1000'),
