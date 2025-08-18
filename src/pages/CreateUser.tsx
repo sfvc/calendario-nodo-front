@@ -34,32 +34,40 @@ export default function UserCreateForm() {
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setIsLoading(true)
 
-    try {
-      const res = await api.post("/users", formData)
-
-      setFormData({ email: "", password: "" })
-      toast.success("Usuario creado exitosamente")
-    } catch (error: any) {
-      console.error("Error creando usuario:", error)
-
-      const message =
-        error.response?.data?.message ||
-        error.message ||
-        "Ocurrió un error al crear el usuario."
-
-      if (message.includes("email ya registrado")) {
-        toast.error("Este correo ya está registrado.")
-      } else {
-        toast.error(message)
-      }
-    } finally {
+  try {
+    // Validar que el email tenga @nodo.com
+    if (!formData.email.endsWith("@nodo.com")) {
+      toast.error("El correo debe terminar con @nodo.com")
       setIsLoading(false)
+      return
     }
+
+    const res = await api.post("/users", formData)
+
+    setFormData({ email: "", password: "" })
+    toast.success("Usuario creado exitosamente")
+  } catch (error: any) {
+    console.error("Error creando usuario:", error)
+
+    // Revisar si es usuario existente
+    const isUserExists = error.response?.data?.message?.includes("email ya registrado")
+
+    if (isUserExists) {
+      toast.error("Este correo ya está registrado.")
+    } else {
+      // Otro tipo de error
+      const message = error.response?.data?.message || error.message || "Ocurrió un error al crear el usuario."
+      toast.error(message)
+    }
+  } finally {
+    setIsLoading(false)
   }
+}
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br p-4" style={{ backgroundColor: "#f0fdff" }}>

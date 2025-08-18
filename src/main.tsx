@@ -9,7 +9,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AuthProvider>
       <App />
-      <Toaster richColors position="bottom-right" />
     </AuthProvider>
+    <Toaster richColors position="bottom-right" />
   </React.StrictMode>
 )

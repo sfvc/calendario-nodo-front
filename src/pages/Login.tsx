@@ -1,43 +1,57 @@
-import React, { useState } from "react"
+import React, { useState } from "react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../components/ui/Card"
-import { Label } from "../components/ui/Label"
-import { Input } from "../components/ui/Input"
-import { Button } from "../components/ui/Button"
-import { Eye, EyeOff, Lock, Mail, User } from "../components/Icons"
-import { useNavigate } from "react-router-dom"
-import { useAuth } from "@/context"
-import type { LoginForm } from "@/context/auth-types"
+} from "../components/ui/Card";
+import { Label } from "../components/ui/Label";
+import { Input } from "../components/ui/Input";
+import { Button } from "../components/ui/Button";
+import { Eye, EyeOff, Lock, Mail, User } from "../components/Icons";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context";
+import type { LoginForm } from "@/context/auth-types";
+import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 export default function LoginForm() {
   const [formData, setFormData] = useState<LoginForm>({
     email: "",
     password: "",
-  })
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Reincorporamos isLoading
 
-  const navigate = useNavigate()
-  const { login } = useAuth()
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true); // Se activa el estado de carga
 
-    await login(formData)
-    navigate("/")
-    setIsLoading(false)
-  }
+    try {
+      await login(formData);
+      toast.success("Inicio de sesión exitoso 🎉");
+      navigate("/");
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        toast.error("Correo o contraseña incorrectos ❌");
+      } else {
+        toast.error("Ocurrió un error inesperado 😓");
+        console.error(error);
+      }
+    } finally {
+      // Este bloque se ejecuta siempre, garantizando que isLoading sea false
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br p-4">
@@ -97,7 +111,11 @@ export default function LoginForm() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -105,24 +123,23 @@ export default function LoginForm() {
               <div className="flex flex-wrap justify-center items-center gap-4 mt-6">
                 <Button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading} // El botón se deshabilita durante la carga
                   className="w-full h-12 bg-gradient-to-r botonazul hover:from-blue-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
                 >
                   {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
                 </Button>
 
-                <a
-                  href="/"
-                  className="h-12 px-6 w-full rounded-lg inline-flex items-center justify-center
-                            text-blue-400"
+                <Link
+                  to="/"
+                  className="h-12 px-6 w-full rounded-lg inline-flex items-center justify-center text-blue-400"
                 >
                   Volver a inicio
-                </a>
+                </Link>
               </div>
             </form>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }
