@@ -140,3 +140,7 @@
   background-color: #5db9f8 !important;
   border: 1px solid #f0fdff !important;
 }
+
+button{
+  cursor: pointer;
+}

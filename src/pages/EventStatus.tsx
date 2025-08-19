@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
+import Loading from "@/components/loading";
 
 type EstadoEvento = {
   id: number;
@@ -104,7 +105,7 @@ const EstadosEventosPage: React.FC = () => {
     setCurrentEstado({ ...currentEstado, [e.target.name]: e.target.value });
   };
 
-  if (loading) return <div>Cargando estados...</div>;
+  if (loading) return <div><Loading/></div>;
   if (error) return <div>{error}</div>;
 
   return (

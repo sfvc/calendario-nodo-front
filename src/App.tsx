@@ -9,6 +9,7 @@ import UserCreateForm from './pages/CreateUser';
 import { useAuth } from './context';
 import EstadosEventosPage from './pages/EventStatus';
 import LockScreen from './pages/LockScreen';
+// import LoginNuevo from './pages/LoginNuevo';
 
 const App = () => {
   const { checkToken } = useAuth()
