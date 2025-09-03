@@ -144,3 +144,11 @@
 button{
   cursor: pointer;
 }
+
+.fc-weekend {
+  background-color: #d0ebff !important; /* azul pastel */
+}
+
+.fc-weekend:hover {
+  background-color: #a5d8ff !important; /* azul un poco más intenso al pasar el mouse */
+}

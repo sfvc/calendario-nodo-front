@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Calendar, RotateCw } from "lucide-react"; // Added RotateCw icon
+import { Calendar, RotateCw } from "lucide-react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { useAuth } from "../context";
-import { Button } from "@/components/ui/Button"; // Corrected import path for shadcn button
+import { Button } from "@/components/ui/Button";
 import { EventModal } from "@/components/event-modal";
 import { EventAPI } from "../lib/eventApi";
 import {
@@ -13,69 +13,106 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"; // Corrected import path for shadcn dialog components
+} from "@/components/ui/dialog";
 import type { DateSelectArg, EventClickArg } from "@fullcalendar/core/index.js";
 import type { CalendarEvent, EventResponse } from "@/types/event";
 import { toast } from "sonner";
+import AlertaBanner from "./alertaBanner";
 
 export function EventCalendar() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(
-    null
-  );
+  const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
   const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [,setIsLoading] = useState<boolean>(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
 
   const loadEvents = async () => {
     setIsLoading(true);
     try {
-      const data = await EventAPI.getAll();
+      const data: CalendarEvent[] = await EventAPI.getAll();
+      console.log("Eventos desde backend:", data);
 
-      const adjustedEvents = data.map((event) => {
-        let startDate = new Date(event.start);
-        let endDate = event.end ? new Date(event.end) : null;
-
-        const isAllDay = event.allDay ?? !event.start.includes("T");
-
-        const isStartMidnight =
-          startDate.getUTCHours() === 0 &&
-          startDate.getUTCMinutes() === 0 &&
-          startDate.getUTCSeconds() === 0;
-
-        const isEndMidnight =
-          endDate &&
-          endDate.getUTCHours() === 0 &&
-          endDate.getUTCMinutes() === 0 &&
-          endDate.getUTCSeconds() === 0;
-
-        // Si el start es medianoche UTC, sumamos horas para corregir visualización en zona local
-        if (isStartMidnight) {
-          startDate.setUTCHours(startDate.getUTCHours() + 3); // Ajusta según tu zona horaria
-        }
-
-        // Si el evento NO es allDay pero termina a medianoche exacta, le sumamos 1 día
-        if (!isAllDay && endDate && isEndMidnight) {
-          endDate.setUTCDate(endDate.getUTCDate() + 1);
-        }
-
-        return {
-          ...event,
-          start: startDate.toISOString(),
-          end: endDate ? endDate.toISOString() : undefined,
-          allDay: isAllDay,
-          display: "auto",
-        };
+      // Ordenar por fechaInicio y horaInicio
+      data.sort((a, b) => {
+        const dateA = new Date(`${a.fechaInicio}T${a.horaInicio ?? "00:00"}:00`);
+        const dateB = new Date(`${b.fechaInicio}T${b.horaInicio ?? "00:00"}:00`);
+        return dateA.getTime() - dateB.getTime();
       });
+      // Transformamos los eventos para FullCalendar
+        const formattedEvents = data.map(evt => {
+          let start: Date;
+          let end: Date;
 
-      adjustedEvents.sort(
-        (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
-      );
+          const addOneDay = (date: Date): Date => {
+            const result = new Date(date);
+            result.setDate(result.getDate() + 1);
+            return result;
+          };
+          const startDate = addOneDay(new Date(evt.fechaInicio));
+          const endDate = addOneDay(new Date(evt.fechaFin));
 
-      setEvents(adjustedEvents);
-    } catch (error) {
-      console.error("Error cargando eventos:", error);
-      toast.error("No se pudieron cargar los eventos");
+
+          if (evt.allDay) {
+            // Evento de todo el día → usar solo fecha (sin hora)
+            // Y adelantar end en un día porque FullCalendar no lo incluye
+            start = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+            end = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+          } else {
+            // Evento con hora → combinar fecha y hora
+            const [hInicio, mInicio] = (evt.horaInicio ?? "00:00").split(":").map(Number);
+            const [hFin, mFin] = (evt.horaFin ?? "00:00").split(":").map(Number);
+
+            start = new Date(
+              startDate.getFullYear(),
+              startDate.getMonth(),
+              startDate.getDate(),
+              hInicio,
+              mInicio
+            );
+
+            end = new Date(
+              endDate.getFullYear(),
+              endDate.getMonth(),
+              endDate.getDate(),
+              hFin,
+              mFin
+            );
+          }
+
+          return {
+            id: evt.id,
+            title: evt.title,
+            start,
+            end,
+            allDay: evt.allDay ?? false,
+            color: evt.color ?? "#3b82f6",
+            extendedProps: {
+              description: evt.description,
+              estado: evt.estado,
+              estadoId: evt.estadoId,
+              userId: evt.userId,
+              organizacion: evt.organizacion,
+              cantidadPersonas: evt.cantidadPersonas,
+              espacioUtilizar: evt.espacioUtilizar,
+              requerimientos: evt.requerimientos,
+              cobertura: evt.cobertura,
+              fechaInicio: evt.fechaInicio,
+              fechaFin: evt.fechaFin,
+              horaInicio: evt.horaInicio,
+              horaFin: evt.horaFin,
+            },
+          };
+        });
+
+
+
+      console.log("Eventos formateados para FullCalendar:", formattedEvents);
+      setEvents(formattedEvents);
+    } catch (err) {
+      console.error("Error al cargar eventos:", err);
+      toast.error("❌ No se pudieron cargar los eventos", { duration: 4000 });
     } finally {
       setIsLoading(false);
     }
@@ -86,12 +123,10 @@ export function EventCalendar() {
       await EventAPI.remove(id);
       toast.success("✅ Evento eliminado correctamente", { duration: 3000 });
       setIsOpen(false);
+      setRefreshKey(prev => prev + 1); // esto hará que useEffect recargue los eventos
     } catch (err) {
       console.error("Error al eliminar:", err);
-      toast.error(
-        "❌ Hubo un problema de conexión al eliminar el evento",
-        { duration: 4000 }
-      );
+      toast.error("❌ Hubo un problema de conexión al eliminar el evento", { duration: 4000 });
     }
   };
 
@@ -101,24 +136,31 @@ export function EventCalendar() {
     selectInfo.view.calendar.unselect();
   };
 
-  function toLocalDateString(date: Date | undefined | null) {
-    if (!date) return undefined;
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const day = date.getDate().toString().padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  }
-
   const handleEventClick = (e: EventClickArg) => {
-    const fullEvent = {
+    const props = e.event.extendedProps;
+
+    const fullEvent: EventResponse = {
       id: e.event.id,
       title: e.event.title,
-      start: toLocalDateString(e.event.start),
-      end: toLocalDateString(e.event.end),
+      start: e.event.start?.toISOString(),
+      end: e.event.end?.toISOString(),
       allDay: e.event.allDay,
       color: e.event.backgroundColor,
-      ...e.event.extendedProps,
-    } as EventResponse;
+      // Todos los campos personalizados
+      fechaInicio: props.fechaInicio,
+      fechaFin: props.fechaFin,
+      horaInicio: props.horaInicio,
+      horaFin: props.horaFin,
+      description: props.description,
+      estado: props.estado,
+      estadoId: props.estadoId,
+      userId: props.userId,
+      organizacion: props.organizacion,
+      cantidadPersonas: props.cantidadPersonas,
+      espacioUtilizar: props.espacioUtilizar,
+      requerimientos: props.requerimientos,
+      cobertura: props.cobertura,
+    };
 
     setSelectedEvent(fullEvent);
     setIsOpen(true);
@@ -126,7 +168,7 @@ export function EventCalendar() {
 
   useEffect(() => {
     loadEvents();
-  }, []);
+  }, [refreshKey]);
 
   return (
     <div className="min-h-screen">
@@ -139,61 +181,33 @@ export function EventCalendar() {
             </h1>
             {user?.email && (
               <p className="text-muted-foreground mt-2">
-                Bienvenido,{" "}
-                <span className="font-semibold text-primary">
-                  {user.email}
-                </span>
+                Bienvenido, <span className="font-semibold text-primary">{user.email}</span>
               </p>
             )}
           </div>
+
           {user?.email ? (
             <div className="flex flex-col md:flex-row items-start md:items-center gap-3 w-full md:w-auto">
               <div className="flex flex-wrap gap-3">
-                <Button
-                  onClick={() => window.location.reload()}
-                  variant="outline"
-                  className="bg-white flex items-center gap-2 cursor-pointer"
-                >
+                <Button onClick={() => window.location.reload()} variant="outline" className="bg-white flex items-center gap-2 cursor-pointer">
                   <RotateCw className="h-4 w-4" />
                   Recargar
                 </Button>
-                <Button
-                  onClick={() => {
-                    setSelectedEvent(null);
-                    setIsOpen(true);
-                  }}
-                  className="cursor-pointer"
-                >
+                <Button onClick={() => { setSelectedEvent(null); setIsOpen(true); }} className="cursor-pointer">
                   + Crear Evento
                 </Button>
-
-                <Link to="/estados">
-                  <Button
-                    className="cursor-pointer"
-                  >+ Crear Estados</Button>
-                </Link>
-
-                {user?.role === "ADMIN" && (
-                  <Link to="/user">
-                    <Button
-                      className="cursor-pointer"
-                    >
-                      Crear Usuarios
-                    </Button>
-                  </Link>
-                )}
+                <Link to="/eventos"><Button className="cursor-pointer">Ver todos los Eventos</Button></Link>
+                <Link to="/estados"><Button className="cursor-pointer">+ Crear Estados</Button></Link>
+                {user?.role === "ADMIN" && <Link to="/user"><Button className="cursor-pointer">Crear Usuarios</Button></Link>}
               </div>
-
-              <Button className="cursor-pointer" onClick={logout} variant="destructive">
-                Cerrar sesión
-              </Button>
+              <Button className="cursor-pointer" onClick={logout} variant="destructive">Cerrar sesión</Button>
             </div>
           ) : (
-            <Link to="/login">
-              <Button>Iniciar sesión</Button>
-            </Link>
+            <Link to="/login"><Button>Iniciar sesión</Button></Link>
           )}
         </div>
+
+        <AlertaBanner />
 
         <div className="bg-white p-6 rounded-lg shadow-md border">
           <FullCalendar
@@ -212,28 +226,15 @@ export function EventCalendar() {
             }}
             height="auto"
             timeZone="local"
-            buttonText={{
-              today: "Hoy",
-              month: "Mes",
-              week: "Semana",
-              day: "Día",
-            }}
+            buttonText={{ today: "Hoy", month: "Mes", week: "Semana", day: "Día" }}
             dayHeaderClassNames="bg-muted text-foreground font-medium"
-            dayCellClassNames="hover:bg-accent transition-colors"
+            dayCellClassNames={(arg) => (arg.date.getDay() === 0 || arg.date.getDay() === 6 ? ["fc-weekend"] : [])}
             eventClassNames="cursor-pointer hover:opacity-80 transition-opacity"
           />
         </div>
       </div>
 
-      <Dialog
-        open={isOpen}
-        onOpenChange={(open) => {
-          setIsOpen(open);
-          if (!open) {
-            loadEvents(); // 🔄 Refrescar eventos al cerrar modal
-          }
-        }}
-      >
+      <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
         <DialogContent className="sm:max-w-[625px] lg:max-w-[900px] max-h-[90vh] overflow-y-auto bg-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-2xl font-semibold text-gray-800">
@@ -247,9 +248,11 @@ export function EventCalendar() {
             onClose={() => setIsOpen(false)}
             onDelete={selectedEvent ? handleDelete : undefined}
             event={selectedEvent}
+            onSave={() => setRefreshKey(prev => prev + 1)} // <-- recarga eventos automáticamente
           />
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }

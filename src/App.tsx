@@ -9,6 +9,7 @@ import UserCreateForm from './pages/CreateUser';
 import { useAuth } from './context';
 import EstadosEventosPage from './pages/EventStatus';
 import LockScreen from './pages/LockScreen';
+import EventList from './pages/EventList';
 // import LoginNuevo from './pages/LoginNuevo';
 
 const App = () => {
@@ -23,6 +24,7 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/eventos" element={<EventList />} />
           <Route path="/login" element={<LoginForm />} />
           <Route path="/calendario" element={< EventCalendar />} />
           <Route path="/no" element={<NotFound />} />

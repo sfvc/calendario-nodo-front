@@ -7,6 +7,7 @@ import type { EventResponse } from '../types/event';
 interface EventModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSave?: () => void;
   onDelete?: (eventId: string) => void;
   event: EventResponse | null;
 }
@@ -14,6 +15,7 @@ interface EventModalProps {
 export function EventModal({
   onClose,
   onDelete,
+  onSave,
   event,
 }: EventModalProps) {
   const { user } = useAuth();
@@ -38,6 +40,7 @@ export function EventModal({
       isReadOnly={isReadOnly}
       handleDelete={handleDelete}
       onClose={onClose}
+      onSave={onSave}
     />
   );
 }

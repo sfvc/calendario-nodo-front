@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/Label";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import Loading from "@/components/loading";
+import { Link } from "react-router-dom";
 
 type EstadoEvento = {
   id: number;
@@ -112,7 +113,16 @@ const EstadosEventosPage: React.FC = () => {
     <div className="container mx-auto p-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Estados para Eventos</h1>
-        <Button className="cursor-pointer" onClick={openCreateModal}>Crear Estado</Button>
+        <div className="flex justify-end items-center gap-4">
+          <Button className="cursor-pointer" onClick={openCreateModal}>Crear Estado</Button>
+          <Button
+            asChild
+            variant="outline"
+            className="bg-green-600 text-white hover:bg-green-700 hover:text-white transition-colors duration-200 cursor-pointer"
+          >
+            <Link to="/">Volver a Inicio</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-md border">
@@ -154,37 +164,45 @@ const EstadosEventosPage: React.FC = () => {
       </div>
 
       {/* Modal Crear/Editar */}
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>
-              {modalMode === "create" ? "Crear Estado" : "Editar Estado"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="nombre" className="text-right">
-                Nombre
-              </Label>
-              <Input
-                id="nombre"
-                name="nombre"
-                value={currentEstado?.nombre || ""}
-                onChange={handleChange}
-                className="col-span-3 bg-white"
-              />
+      <Dialog  open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-white rounded-lg shadow-lg">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}
+          >
+            <DialogHeader>
+              <DialogTitle>
+                {modalMode === "create" ? "Crear Estado" : "Editar Estado"}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="nombre" className="text-right">
+                  Nombre
+                </Label>
+                <Input
+                  id="nombre"
+                  name="nombre"
+                  value={currentEstado?.nombre || ""}
+                  onChange={handleChange}
+                  className="col-span-3 bg-white"
+                />
+              </div>
             </div>
-          </div>
-          <DialogFooter>
-            <Button
-              className="cursor-pointer"
-              type="submit"
-              onClick={handleSubmit}
-              disabled={!currentEstado?.nombre.trim()}
-            >
-              {modalMode === "create" ? "Crear" : "Guardar cambios"}
-            </Button>
-          </DialogFooter>
+
+            <DialogFooter>
+              <Button
+                className="cursor-pointer"
+                type="submit"
+                disabled={!currentEstado?.nombre.trim()}
+              >
+                {modalMode === "create" ? "Crear" : "Guardar cambios"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

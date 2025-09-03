@@ -25,7 +25,6 @@ interface Props {
   isEditing: boolean;
   handleDelete: () => void;
   onClose: () => void;
-  onSave?: () => void;
 }
 
 export const EventForm: React.FC<Props> = ({
@@ -35,25 +34,19 @@ export const EventForm: React.FC<Props> = ({
   isEditing,
   handleDelete,
   onClose,
-  onSave,
 }) => {
   const { user } = useAuth();
   const [estados, setEstados] = useState<EstadoEvento[]>([]);
   const [loadingEstados, setLoadingEstados] = useState(true);
   const [errorEstados, setErrorEstados] = useState<string | null>(null);
 
-  const safeToISODate = (value: any): string => {
-    const date = new Date(value);
-    return isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
-  };
-
   const mapEventToFormDTO = (event: CalendarEvent): CalendarEventFormDTO => ({
     ...event,
-    fechaInicio: safeToISODate(event.fechaInicio),
-    fechaFin: safeToISODate(event.fechaFin),
+    fechaInicio: event.fechaInicio ? event.fechaInicio.toISOString().split("T")[0] : "",
+    fechaFin: event.fechaFin ? event.fechaFin.toISOString().split("T")[0] : "",
     horaInicio: event.horaInicio ?? "",
     horaFin: event.horaFin ?? "",
-  })
+  });
 
   // Cargar estados dinámicos
   useEffect(() => {
@@ -138,10 +131,7 @@ export const EventForm: React.FC<Props> = ({
         await EventAPI.create(payload);
         toast.success("✅ Evento creado correctamente");
       }
-
-      onClose();           // cierra el modal
-      onSave?.();          // <-- notifica al padre que recargue eventos
-      reset();             // limpia el formulario
+      handleClose();
     } catch (error) {
       console.error("Error al guardar el evento:", error);
       toast.error("❌ Ocurrió un error al guardar el evento");
