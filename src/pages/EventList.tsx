@@ -21,6 +21,20 @@ import api from "@/lib/api";
 import Loading from "@/components/loading";
 import type { EventResponse } from "@/types/event";
 
+// 🔹 Función para sumar un día solo en visualización
+const addOneDay = (date: Date): Date => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + 1);
+  return result;
+};
+
+// 🔹 Normalizar fecha a medianoche para comparar solo fechas
+const normalizeDate = (date: Date): number => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+};
+
 const EventList: React.FC = () => {
   const [events, setEvents] = useState<EventResponse[]>([]);
   const [eventStates, setEventStates] = useState<{ id: number; nombre: string }[]>([]);
@@ -44,12 +58,12 @@ const EventList: React.FC = () => {
     fetchEstados();
   }, []);
 
-  // 🔹 Cargar eventos
+  // 🔹 Cargar eventos (sin alterar la fecha para filtros)
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         const res = await api.get<EventResponse[]>("/events");
-        console.log("Eventos recibidos:", res.data); // <-- Aquí ves cómo llegan los datos
+        console.log("Eventos recibidos:", res.data);
         setEvents(res.data);
       } catch (error) {
         console.error("Error cargando eventos:", error);
@@ -65,9 +79,9 @@ const EventList: React.FC = () => {
     const matchesSearch = event.title.toLowerCase().includes(search.toLowerCase());
     const matchesState = filterState === "all" || event.estado === filterState;
 
-    const eventDate = new Date(event.fechaInicio).setHours(0, 0, 0, 0);
-    const startFilter = startDate ? new Date(startDate).setHours(0, 0, 0, 0) : null;
-    const endFilter = endDate ? new Date(endDate).setHours(0, 0, 0, 0) : null;
+    const eventDate = normalizeDate(new Date(event.fechaInicio));
+    const startFilter = startDate ? normalizeDate(new Date(startDate)) : null;
+    const endFilter = endDate ? normalizeDate(new Date(endDate)) : null;
 
     const matchesDate =
       (!startFilter || eventDate >= startFilter) &&
@@ -89,21 +103,18 @@ const EventList: React.FC = () => {
           className="max-w-xs bg-white"
         />
         <Input
-          type="datetime-local"
+          type="date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
           className="bg-white w-48"
         />
         <Input
-          type="datetime-local"
+          type="date"
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
           className="bg-white w-48"
         />
-        <Select 
-          value={filterState}
-          onValueChange={(value) => setFilterState(value)}
-        >
+        <Select value={filterState} onValueChange={(value) => setFilterState(value)}>
           <SelectTrigger className="w-48 bg-white">
             <SelectValue placeholder="Filtrar por estado" />
           </SelectTrigger>
@@ -165,9 +176,13 @@ const EventList: React.FC = () => {
                 >
                   <td className="px-4 py-2 font-semibold">{event.title}</td>
                   <td className="px-4 py-2 font-semibold">{event.organizacion}</td>
-                  <td className="px-4 py-2">{new Date(event.fechaInicio).toLocaleDateString()}</td>
+                  <td className="px-4 py-2">
+                    {addOneDay(new Date(event.fechaInicio)).toLocaleDateString()}
+                  </td>
                   <td className="px-4 py-2">{event.horaInicio ?? "--"}</td>
-                  <td className="px-4 py-2">{new Date(event.fechaFin).toLocaleDateString()}</td>
+                  <td className="px-4 py-2">
+                    {addOneDay(new Date(event.fechaFin)).toLocaleDateString()}
+                  </td>
                   <td className="px-4 py-2">{event.horaFin ?? "--"}</td>
                   <td className="px-4 py-2">{event.estado}</td>
                   <td className="px-4 py-2">
@@ -191,7 +206,7 @@ const EventList: React.FC = () => {
                           </div>
                           <div>
                             <span className="font-semibold">Fecha inicio:</span>{" "}
-                            {new Date(event.fechaInicio).toLocaleDateString()}
+                            {addOneDay(new Date(event.fechaInicio)).toLocaleDateString()}
                           </div>
                           <div>
                             <span className="font-semibold">Hora inicio:</span>{" "}
@@ -199,7 +214,7 @@ const EventList: React.FC = () => {
                           </div>
                           <div>
                             <span className="font-semibold">Fecha fin:</span>{" "}
-                            {new Date(event.fechaFin).toLocaleDateString()}
+                            {addOneDay(new Date(event.fechaFin)).toLocaleDateString()}
                           </div>
                           <div>
                             <span className="font-semibold">Hora fin:</span>{" "}

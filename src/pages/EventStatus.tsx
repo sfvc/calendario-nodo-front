@@ -129,7 +129,6 @@ const EstadosEventosPage: React.FC = () => {
         <Table className="bg-white rounded-md">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[100px]">ID</TableHead>
               <TableHead>Nombre</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
@@ -138,7 +137,6 @@ const EstadosEventosPage: React.FC = () => {
             {estados.length > 0 ? (
               estados.map((estado) => (
                 <TableRow key={estado.id}>
-                  <TableCell className="font-medium">{estado.id}</TableCell>
                   <TableCell>{estado.nombre}</TableCell>
                   <TableCell className="text-right">
                     <Button

@@ -1,10 +1,11 @@
 import * as z from "zod";
 
-// Expresion regular para validar horas HH:mm
+// Expresión regular para validar horas HH:mm
 const horaRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 export const eventFormSchema = z
   .object({
+    // Título del evento
     title: z
       .string()
       .min(1, "El título es requerido")
@@ -17,6 +18,7 @@ export const eventFormSchema = z
       .refine((val) => !isNaN(Date.parse(val)), {
         message: "Fecha de inicio inválida",
       }),
+
     fechaFin: z
       .string()
       .min(1, "La fecha de fin es requerida")
@@ -24,41 +26,76 @@ export const eventFormSchema = z
         message: "Fecha de fin inválida",
       }),
 
-    // Horas en formato HH:mm
-    horaInicio: z.string("Formato de hora inválido").optional(),
-    horaFin: z.string("Formato de hora inválido").optional(),
+    // Horas en formato HH:mm (opcional)
+    horaInicio: z
+      .string()
+      .regex(horaRegex, "Formato de hora de inicio inválido")
+      .optional(),
 
-    description: z.string().optional(),
+    horaFin: z
+      .string()
+      .regex(horaRegex, "Formato de hora de fin inválido")
+      .optional(),
 
+    // Descripción del evento (opcional)
+    description: z
+      .string()
+      .min(1, "La descripción es requerida si se proporciona")
+      .optional(),
+
+    // Color del evento en formato hexadecimal
     color: z
       .string()
       .regex(/^#[0-9A-F]{6}$/i, "Formato de color inválido"),
 
+    // Indica si es un evento de día completo
     allDay: z.boolean(),
 
+    // Estado del evento
     estadoId: z
       .number({
-        required_error: "El estado es requerido",
-        invalid_type_error: "El estado debe ser un número",
+        required_error: "El estado es requerido", // Mensaje cuando no se selecciona un estado
+        invalid_type_error: "El estado debe ser un número", // Mensaje si no es un número válido
       })
       .int()
-      .positive(),
+      .positive()
+      .min(1, "Por favor, selecciona un estado válido.")
+      .optional(),
 
-    organizacion: z.string().min(1, "La organización es requerida"),
+    // Organización que organiza el evento
+    organizacion: z
+      .string()
+      .min(1, "La organización es requerida")
+      .max(200, "El nombre de la organización no puede exceder 200 caracteres"),
 
+    // Cantidad de personas esperadas
     cantidadPersonas: z
       .number()
       .min(1, "Debe haber al menos 1 persona")
       .max(1000, "Número máximo de personas es 1000"),
 
-    espacioUtilizar: z.string().min(1, "El espacio a utilizar es requerido"),
+    // Espacio que se utilizará
+    espacioUtilizar: z
+      .string()
+      .min(1, "El espacio a utilizar es requerido")
+      .max(200, "El nombre del espacio no puede exceder 200 caracteres"),
 
-    requerimientos: z.string().optional(),
-    cobertura: z.string().optional(),
+    // Requerimientos (opcional)
+    requerimientos: z
+      .string()
+      .min(1, "Los requerimientos son necesarios si se especifican.")
+      .optional(),
 
+    // Cobertura (opcional)
+    cobertura: z
+      .string()
+      .min(1, "La cobertura es requerida si se especifica.")
+      .optional(),
+
+    // ID del usuario que crea el evento
     userId: z.string().min(1, "ID de usuario requerido"),
   })
-  // Validar que fechaFin >= fechaInicio
+  // Validación de que la fecha de fin debe ser posterior o igual a la fecha de inicio
   .refine(
     (data) => {
       if (data.fechaInicio && data.fechaFin) {
@@ -71,18 +108,4 @@ export const eventFormSchema = z
       path: ["fechaFin"],
     }
   )
-  // Validar que horaFin > horaInicio
-  .refine(
-    (data) => {
-      if (data.horaInicio && data.horaFin) {
-        const [hiH, hiM] = data.horaInicio.split(":").map(Number);
-        const [hfH, hfM] = data.horaFin.split(":").map(Number);
-        return hfH > hiH || (hfH === hiH && hfM > hiM);
-      }
-      return true;
-    },
-    {
-      message: "La hora de fin debe ser posterior a la hora de inicio",
-      path: ["horaFin"],
-    }
-  );
+

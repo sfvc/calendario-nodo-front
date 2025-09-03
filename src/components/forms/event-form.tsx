@@ -53,7 +53,7 @@ export const EventForm: React.FC<Props> = ({
     fechaFin: safeToISODate(event.fechaFin),
     horaInicio: event.horaInicio ?? "",
     horaFin: event.horaFin ?? "",
-  })
+  });
 
   // Cargar estados dinámicos
   useEffect(() => {
@@ -88,7 +88,7 @@ export const EventForm: React.FC<Props> = ({
       description: "",
       color: "#3b82f6",
       allDay: false,
-      estadoId: 1,
+      estadoId: 0,
       organizacion: "",
       cantidadPersonas: 0,
       espacioUtilizar: "",
@@ -170,7 +170,7 @@ export const EventForm: React.FC<Props> = ({
             disabled={isReadOnly}
           />
           {errors.title && (
-            <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>
+            <p className="text-red-500 text-sm mt-1">{errors.title?.message}</p>
           )}
         </div>
         <div className="space-y-2">
@@ -182,6 +182,10 @@ export const EventForm: React.FC<Props> = ({
             className="w-full rounded-md border px-3 py-2 min-h-[100px] resize-none"
             disabled={isReadOnly}
           />
+
+          {errors.description && (
+            <p className="text-red-500 text-sm">{errors.description?.message}</p>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="organizacion">Organización *</Label>
@@ -191,6 +195,9 @@ export const EventForm: React.FC<Props> = ({
             placeholder="Nombre de la organización"
             disabled={isReadOnly}
           />
+          {errors.organizacion && (
+            <p className="text-red-500 text-sm mt-1">{errors.organizacion?.message}</p>
+          )}
         </div>
       </section>
 
@@ -207,7 +214,7 @@ export const EventForm: React.FC<Props> = ({
               disabled={isReadOnly}
             />
             {errors.fechaInicio && (
-              <p className="text-red-500 text-sm">{errors.fechaInicio.message}</p>
+              <p className="text-red-500 text-sm">{errors.fechaInicio?.message}</p>
             )}
           </div>
           <div className="space-y-2">
@@ -218,6 +225,9 @@ export const EventForm: React.FC<Props> = ({
               {...register("horaInicio")}
               disabled={isReadOnly}
             />
+            {errors.horaInicio && (
+              <p className="text-red-500 text-sm">{errors.horaInicio?.message}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="fechaFin">Fecha de Fin *</Label>
@@ -228,7 +238,7 @@ export const EventForm: React.FC<Props> = ({
               disabled={isReadOnly}
             />
             {errors.fechaFin && (
-              <p className="text-red-500 text-sm">{errors.fechaFin.message}</p>
+              <p className="text-red-500 text-sm">{errors.fechaFin?.message}</p>
             )}
           </div>
           <div className="space-y-2">
@@ -239,6 +249,9 @@ export const EventForm: React.FC<Props> = ({
               {...register("horaFin")}
               disabled={isReadOnly}
             />
+            {errors.horaFin && (
+              <p className="text-red-500 text-sm">{errors.horaFin?.message}</p>
+            )}
           </div>
         </div>
       </section>
@@ -257,21 +270,32 @@ export const EventForm: React.FC<Props> = ({
               {...register("cantidadPersonas", { valueAsNumber: true })}
               disabled={isReadOnly}
             />
+            {errors.cantidadPersonas && (
+              <p className="text-red-500 text-sm">{errors.cantidadPersonas?.message}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="estadoId">Estado</Label>
             <select
-              {...register("estadoId", { valueAsNumber: true })}
+              {...register("estadoId", { 
+                valueAsNumber: true, // Convierte el valor a número
+                required: "El estado es requerido", // Asegura que el campo no esté vacío
+              })}
               className="w-full px-3 py-2 border rounded-lg"
               disabled={isReadOnly}
             >
-              <option value="">Seleccione un estado</option>
+              {/* <option value="">Seleccione un estado</option> */}
               {estados.map((estado) => (
                 <option key={estado.id} value={estado.id}>
                   {estado.nombre}
                 </option>
               ))}
             </select>
+
+            {/* Mostrar el error si existe */}
+            {errors.estadoId && (
+              <p className="text-red-500 text-sm">{errors.estadoId.message}</p>
+            )}
           </div>
         </div>
         <div className="space-y-2">
@@ -284,6 +308,9 @@ export const EventForm: React.FC<Props> = ({
             placeholder="Ej: Salón principal, Auditorio, etc."
             disabled={isReadOnly}
           />
+          {errors.espacioUtilizar && (
+            <p className="text-red-500 text-sm">{errors.espacioUtilizar?.message}</p>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="requerimientos" className="flex items-center gap-2">
@@ -296,6 +323,9 @@ export const EventForm: React.FC<Props> = ({
             className="w-full rounded-md border px-3 py-2 min-h-[60px] resize-none"
             disabled={isReadOnly}
           />
+          {errors.requerimientos && (
+            <p className="text-red-500 text-sm">{errors.requerimientos?.message}</p>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="cobertura" className="flex items-center gap-2">
@@ -308,6 +338,9 @@ export const EventForm: React.FC<Props> = ({
             className="w-full rounded-md border px-3 py-2 min-h-[60px] resize-none"
             disabled={isReadOnly}
           />
+          {errors.cobertura && (
+            <p className="text-red-500 text-sm">{errors.cobertura?.message}</p>
+          )}
         </div>
       </section>
 
