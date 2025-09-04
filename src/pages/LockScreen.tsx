@@ -23,7 +23,7 @@ const LockScreen: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       setIsUnlocked(false);
       setInputPassword(""); // Limpiar el input cuando se bloquea automáticamente
       localStorage.removeItem("screenUnlocked"); // resetea el flag en localStorage
-    }, 3600000); // 60,000 ms = 1 minuto
+    }, 6000); // 60,000 ms = 1 minuto
 
     return () => clearInterval(interval); // limpiar el intervalo al desmontar
   }, []);
