@@ -17,16 +17,18 @@ const LockScreen: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     setLoading(false);
   }, []);
 
-  // Timer para bloquear cada 1 minuto
+  // Timer para bloquear cada 1 hora
   useEffect(() => {
+    if (!isUnlocked) return;
+
     const interval = setInterval(() => {
       setIsUnlocked(false);
-      setInputPassword(""); // Limpiar el input cuando se bloquea automáticamente
-      localStorage.removeItem("screenUnlocked"); // resetea el flag en localStorage
-    }, 6000); // 60,000 ms = 1 minuto
+      setInputPassword("");
+      localStorage.removeItem("screenUnlocked");
+    }, 3600000); // 3,600,000 ms = 1 hora
 
-    return () => clearInterval(interval); // limpiar el intervalo al desmontar
-  }, []);
+    return () => clearInterval(interval);
+  }, [isUnlocked]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
