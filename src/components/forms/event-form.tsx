@@ -12,6 +12,10 @@ import type { CalendarEvent, CalendarEventFormDTO } from "@/types/event";
 import { EventAPI } from "@/lib/eventApi";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { useFieldArray } from "react-hook-form";
+import { PlusCircle, Trash2, Image as ImageIcon, Link as LinkIcon, File as FileIcon } from "lucide-react";
+import { arch } from "os";
+
 
 type EstadoEvento = {
   id: number;
@@ -53,6 +57,10 @@ export const EventForm: React.FC<Props> = ({
     fechaFin: safeToISODate(event.fechaFin),
     horaInicio: event.horaInicio ?? "",
     horaFin: event.horaFin ?? "",
+    informacionUtil: "",
+    fotos: event.fotos?.length ? event.fotos : [],       // mantener si existen
+    archivos: event.archivos?.length ? event.archivos : [],
+    links: event.links?.length ? event.links : [],
   });
 
   // Cargar estados dinámicos
@@ -76,6 +84,7 @@ export const EventForm: React.FC<Props> = ({
     reset,
     watch,
     setValue,
+    control, // <-- necesario para useFieldArray
     formState: { errors, isSubmitting },
   } = useForm<CalendarEventFormDTO>({
     resolver: zodResolver(eventFormSchema),
@@ -94,9 +103,18 @@ export const EventForm: React.FC<Props> = ({
       espacioUtilizar: "",
       requerimientos: "",
       cobertura: "",
+      informacionUtil: "",
       userId: user?.id ?? "",
+      fotos: [],     // array de URLs de fotos
+      archivos: [],  // array de URLs de archivos
+      links: [],     // array de URLs de links
     },
   });
+
+
+  const fotosFieldArray = useFieldArray({ control, name: "fotos" });
+  const archivosFieldArray = useFieldArray({ control, name: "archivos" });
+  const linksFieldArray = useFieldArray({ control, name: "links" });
 
   // Asignar primer estado si no hay evento
   useEffect(() => {
@@ -112,7 +130,7 @@ export const EventForm: React.FC<Props> = ({
     }
   }, [event, reset]);
 
-  const onSubmit = async (data: CalendarEvent) => {
+  const onSubmit = async (data: CalendarEventFormDTO) => {
     if (!user) {
       toast.error("Usuario no autenticado");
       return;
@@ -121,31 +139,35 @@ export const EventForm: React.FC<Props> = ({
     const fechaInicioDate = new Date(data.fechaInicio);
     const fechaFinDate = new Date(data.fechaFin);
 
-    const payload: CalendarEvent = {
-      ...data,
-      fechaInicio: fechaInicioDate,
-      fechaFin: fechaFinDate,
-      horaInicio: data.horaInicio,
-      horaFin: data.horaFin,
-      userId: user.id,
-    };
+  const payload: CalendarEvent = {
+    ...data,
+    fechaInicio: fechaInicioDate,
+    fechaFin: fechaFinDate,
+    userId: user.id,
+    fotos: data.fotos,
+    archivos: data.archivos,
+    links: data.links,
+    informacionUtil: data.informacionUtil
+  };
 
-    try {
-      if (event) {
-        await EventAPI.update(event.id, payload);
-        toast.success("✅ Evento actualizado correctamente");
-      } else {
-        await EventAPI.create(payload);
-        toast.success("✅ Evento creado correctamente");
-      }
+    console.log(payload);
 
-      onClose();           // cierra el modal
-      onSave?.();          // <-- notifica al padre que recargue eventos
-      reset();             // limpia el formulario
-    } catch (error) {
-      console.error("Error al guardar el evento:", error);
-      toast.error("❌ Ocurrió un error al guardar el evento");
-    }
+    // try {
+    //   if (event) {
+    //     await EventAPI.update(event.id, payload);
+    //     toast.success("✅ Evento actualizado correctamente");
+    //   } else {
+    //     await EventAPI.create(payload);
+    //     toast.success("✅ Evento creado correctamente");
+    //   }
+
+    //   onClose();           // cierra el modal
+    //   onSave?.();          // <-- notifica al padre que recargue eventos
+    //   reset();             // limpia el formulario
+    // } catch (error) {
+    //   console.error("Error al guardar el evento:", error);
+    //   toast.error("❌ Ocurrió un error al guardar el evento");
+    // }
   };
 
   const handleClose = () => {
@@ -344,6 +366,195 @@ export const EventForm: React.FC<Props> = ({
         </div>
       </section>
 
+      {/* NUEVO CAMPO: informacionUtil */}
+      <div className="space-y-2">
+        <Label htmlFor="informacionUtil" className="flex items-center gap-2">
+          <FileText className="h-4 w-4" /> Información Útil
+        </Label>
+        <textarea
+          id="informacionUtil"
+          {...register("informacionUtil")}
+          placeholder="Información adicional útil del evento"
+          className="w-full rounded-md border px-3 py-2 min-h-[60px] resize-none"
+          disabled={isReadOnly}
+        />
+        {errors.informacionUtil && (
+          <p className="text-red-500 text-sm">{errors.informacionUtil?.message}</p>
+        )}
+      </div>
+
+      {/* Links */}    
+      <section className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <LinkIcon className="h-5 w-5" /> Links
+        </h3>
+        <div className="space-y-2">
+          {linksFieldArray.fields.map((field, index) => (
+            <div key={field.id} className="flex items-center gap-2">
+              <Input
+                {...register(`links.${index}` as const)}
+                placeholder="Enlace relacionado"
+                disabled={isReadOnly}
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                onClick={() => linksFieldArray.remove(index)}
+                disabled={isReadOnly}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => linksFieldArray.append("")}
+            disabled={isReadOnly}
+          >
+            <PlusCircle className="h-4 w-4 mr-2" /> Añadir link
+          </Button>
+        </div>
+      </section>
+
+      {/* Fotos */}
+        <section className="space-y-4">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <ImageIcon className="h-5 w-5" /> Fotos
+          </h3>
+          <div className="space-y-2">
+            {fotosFieldArray.fields.map((field, index) => (
+              <div key={field.id} className="flex items-center gap-2">
+                {/* Preview de la imagen */}
+                {watch(`fotos.${index}`)?.preview && (
+                  <img
+                    src={watch(`fotos.${index}`).preview}
+                    alt="Preview"
+                    className="w-20 h-20 object-cover rounded"
+                  />
+                )}
+
+                {/* Botón de subir imagen */}
+                <label className="flex-1 flex items-center justify-between px-4 py-2 border rounded-lg cursor-pointer bg-white hover:bg-gray-100">
+                  <span className="truncate">
+                    {watch(`fotos.${index}`)?.file?.name || "Selecciona una foto"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      // Guardar el objeto file y la URL de preview
+                      setValue(`fotos.${index}`, {
+                        file,
+                        preview: URL.createObjectURL(file),
+                      });
+                    }}
+                    disabled={isReadOnly}
+                  />
+                </label>
+
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => fotosFieldArray.remove(index)}
+                  disabled={isReadOnly}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fotosFieldArray.append({ file: null, preview: null })}
+              disabled={isReadOnly}
+            >
+              <PlusCircle className="h-4 w-4 mr-2" /> Añadir foto
+            </Button>
+          </div>
+        </section>
+
+
+      {/* Archivos */}
+      <section className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <FileIcon className="h-5 w-5" /> Archivos
+        </h3>
+
+        {archivosFieldArray.fields.map((field, index) => (
+          <div key={field.id} className="flex items-center gap-2">
+            {/* Preview con icono según tipo de archivo */}
+            {watch(`archivos.${index}`) && (
+              <div className="w-10 h-10 flex items-center justify-center border rounded bg-gray-100">
+                {(() => {
+                  const file = watch(`archivos.${index}`);
+                  if (!file) return null;
+                  const ext = file.name.split(".").pop()?.toLowerCase();
+                    switch (ext) {
+                      case "pdf":
+                        return <span className="text-red-500 text-xl">📄</span>;
+                      case "doc":
+                      case "docx":
+                        return <span className="text-blue-500 text-xl">📄</span>;
+                      default:
+                        return <span className="text-gray-500 text-xl">📁</span>;
+                    }
+                })()}
+              </div>
+            )}
+
+
+            {/* Botón personalizado */}
+            <label className="flex-1 flex items-center justify-between px-4 py-2 border rounded-lg cursor-pointer bg-white hover:bg-gray-100">
+              <span className="truncate">
+                {watch(`archivos.${index}`)?.name ||
+                  "Selecciona un archivo (.pdf, .doc, .docx)"}
+              </span>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+
+                  // Guardar el objeto File completo
+                  setValue(`archivos.${index}`, file);
+                }}
+                disabled={isReadOnly}
+              />
+            </label>
+
+            <Button
+              type="button"
+              variant="destructive"
+              size="icon"
+              onClick={() => archivosFieldArray.remove(index)}
+              disabled={isReadOnly}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => archivosFieldArray.append("")}
+          disabled={isReadOnly}
+        >
+          <PlusCircle className="h-4 w-4 mr-2" /> Añadir archivo
+        </Button>
+      </section>
+
+        
       {/* Apariencia */}
       <section className="space-y-4">
         <h3 className="text-lg font-semibold">Apariencia</h3>

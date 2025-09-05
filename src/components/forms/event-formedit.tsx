@@ -65,3 +65,24 @@ const loadEvents = async () => {
     setIsLoading(false);
   }
 };
+
+
+
+
+
+    // try {
+    //   if (event) {
+    //     await EventAPI.update(event.id, payload);
+    //     toast.success("✅ Evento actualizado correctamente");
+    //   } else {
+    //     await EventAPI.create(payload);
+    //     toast.success("✅ Evento creado correctamente");
+    //   }
+
+    //   onClose();
+    //   onSave?.();
+    //   reset();
+    // } catch (error) {
+    //   console.error("Error al guardar el evento:", error);
+    //   toast.error("❌ Ocurrió un error al guardar el evento");
+    // }

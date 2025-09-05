@@ -102,6 +102,10 @@ export function EventCalendar() {
               fechaFin: evt.fechaFin,
               horaInicio: evt.horaInicio,
               horaFin: evt.horaFin,
+              informacionUtil: evt.informacionUtil,
+              fotos: evt.fotos,
+              archivos: evt.archivos,
+              links: evt.links,
             },
           };
         });
@@ -160,6 +164,10 @@ export function EventCalendar() {
       espacioUtilizar: props.espacioUtilizar,
       requerimientos: props.requerimientos,
       cobertura: props.cobertura,
+      informacionUtil: props.informacionUtil,
+      fotos: props.fotos,
+      archivos: props.archivos,
+      links: props.links,
     };
 
     setSelectedEvent(fullEvent);

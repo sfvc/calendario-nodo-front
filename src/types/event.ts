@@ -18,17 +18,22 @@ export interface EventResponse {
   espacioUtilizar?: string;
   requerimientos?: string;
   cobertura?: string;
+  informacionUtil?: string;
   userId: string;
 
+  // NUEVAS PROPIEDADES PARA useFieldArray
+  fotos: { file?: File | null; preview?: string | null }[]; // 👈 objetos
+  archivos: (File | null)[];                                // 👈 array de File
+  links: string[];                                          // 👈 array de strings                   
   
 }
 
 export interface EventFormData {
   title: string;
-  fechaInicio: Date;      // ahora es Date
-  fechaFin: Date;         // ahora es Date
-  horaInicio?: string;      // opcional, Date
-  horaFin?: string;         // opcional, Date
+  fechaInicio: Date;
+  fechaFin: Date;
+  horaInicio?: string;
+  horaFin?: string;
   description?: string;
   color: string;
   allDay: boolean;
@@ -41,7 +46,13 @@ export interface EventFormData {
   espacioUtilizar?: string;
   requerimientos?: string;
   cobertura?: string;
+  informacionUtil?: string;
   userId: string;
+
+  // NUEVAS PROPIEDADES PARA useFieldArray
+  fotos: { file?: File | null; preview?: string | null }[]; // 👈 objetos
+  archivos: (File | null)[];                                // 👈 array de File
+  links: string[];                                          // 👈 array de strings                           // para links
 }
 
 export interface CalendarEvent {
@@ -60,8 +71,14 @@ export interface CalendarEvent {
   espacioUtilizar?: string;
   requerimientos?: string;
   cobertura?: string;
+  informacionUtil?: string;
   horaInicio?: string | null;
   horaFin?: string | null;
+
+    // NUEVAS PROPIEDADES PARA useFieldArray
+  fotos: { file?: File | null; preview?: string | null }[]; // 👈 objetos
+  archivos: (File | null)[];                                // 👈 array de File
+  links: string[];                                          // 👈 array de strings
 }
 
 
@@ -80,5 +97,9 @@ export interface CalendarEventFormDTO {
   espacioUtilizar?: string;
   requerimientos?: string;
   cobertura?: string;
+  informacionUtil?: string;
   userId?: string;
+  fotos: { file?: File | null; preview?: string | null }[]; // 👈 objetos
+  archivos:  { file?: File | null }[]; // 👈 array de File
+  links: { url: string }[];  // 👈 array de strings
 }
