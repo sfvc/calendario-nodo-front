@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FileText, MapPin, Shield, Users } from "lucide-react";
+import { FileText, MapPin, Shield, Users, Upload, Link as LinkIcon, Image, File, X, Plus } from "lucide-react";
 import { Label } from "@/components/ui/Label";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -9,13 +9,8 @@ import { useAuth } from "@/context";
 import { eventFormSchema } from "./event-schema";
 import { colorOptions } from "@/constants/colors-options";
 import type { CalendarEvent, CalendarEventFormDTO } from "@/types/event";
-import { EventAPI } from "@/lib/eventApi";
 import { toast } from "sonner";
 import api from "@/lib/api";
-import { useFieldArray } from "react-hook-form";
-import { PlusCircle, Trash2, Image as ImageIcon, Link as LinkIcon, File as FileIcon } from "lucide-react";
-import { arch } from "os";
-
 
 type EstadoEvento = {
   id: number;
@@ -39,7 +34,7 @@ export const EventForm: React.FC<Props> = ({
   isEditing,
   handleDelete,
   onClose,
-  onSave,
+  onSave
 }) => {
   const { user } = useAuth();
   const [estados, setEstados] = useState<EstadoEvento[]>([]);
@@ -58,9 +53,9 @@ export const EventForm: React.FC<Props> = ({
     horaInicio: event.horaInicio ?? "",
     horaFin: event.horaFin ?? "",
     informacionUtil: "",
-    fotos: event.fotos?.length ? event.fotos : [],       // mantener si existen
-    archivos: event.archivos?.length ? event.archivos : [],
-    links: event.links?.length ? event.links : [],
+    fotos: event.fotos?.length ? event.fotos : [],
+    archivos: event.archivos?.length ? event.archivos.map(file => ({ file })) : [],
+    links: event.links?.length ? event.links.map(url => ({ url })) : [],
   });
 
   // Cargar estados dinámicos
@@ -84,7 +79,7 @@ export const EventForm: React.FC<Props> = ({
     reset,
     watch,
     setValue,
-    control, // <-- necesario para useFieldArray
+    control,
     formState: { errors, isSubmitting },
   } = useForm<CalendarEventFormDTO>({
     resolver: zodResolver(eventFormSchema),
@@ -105,16 +100,27 @@ export const EventForm: React.FC<Props> = ({
       cobertura: "",
       informacionUtil: "",
       userId: user?.id ?? "",
-      fotos: [],     // array de URLs de fotos
-      archivos: [],  // array de URLs de archivos
-      links: [],     // array de URLs de links
+      fotos: [],
+      archivos: [],
+      links: [],
     },
   });
 
+  // useFieldArray para manejar arrays dinámicos
+  const { fields: fotosFields, append: appendFoto, remove: removeFoto } = useFieldArray({
+    control,
+    name: "fotos"
+  });
 
-  const fotosFieldArray = useFieldArray({ control, name: "fotos" });
-  const archivosFieldArray = useFieldArray({ control, name: "archivos" });
-  const linksFieldArray = useFieldArray({ control, name: "links" });
+  const { fields: archivosFields, append: appendArchivo, remove: removeArchivo } = useFieldArray({
+    control,
+    name: "archivos"
+  });
+
+  const { fields: linksFields, append: appendLink, remove: removeLink } = useFieldArray({
+    control,
+    name: "links"
+  });
 
   // Asignar primer estado si no hay evento
   useEffect(() => {
@@ -130,6 +136,25 @@ export const EventForm: React.FC<Props> = ({
     }
   }, [event, reset]);
 
+  // Función para manejar la carga de fotos
+  const handleFotoChange = (index: number, file: File | null) => {
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setValue(`fotos.${index}`, {
+          file: file,
+          preview: e.target?.result as string
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Función para manejar la carga de archivos
+  const handleArchivoChange = (index: number, file: File | null) => {
+    setValue(`archivos.${index}.file`, file);
+  };
+
   const onSubmit = async (data: CalendarEventFormDTO) => {
     if (!user) {
       toast.error("Usuario no autenticado");
@@ -139,35 +164,14 @@ export const EventForm: React.FC<Props> = ({
     const fechaInicioDate = new Date(data.fechaInicio);
     const fechaFinDate = new Date(data.fechaFin);
 
-  const payload: CalendarEvent = {
-    ...data,
-    fechaInicio: fechaInicioDate,
-    fechaFin: fechaFinDate,
-    userId: user.id,
-    fotos: data.fotos,
-    archivos: data.archivos,
-    links: data.links,
-    informacionUtil: data.informacionUtil
-  };
+    const payload: CalendarEvent = {
+      ...data,
+      fechaInicio: fechaInicioDate,
+      fechaFin: fechaFinDate,
+      userId: user.id,
+    };
 
     console.log(payload);
-
-    // try {
-    //   if (event) {
-    //     await EventAPI.update(event.id, payload);
-    //     toast.success("✅ Evento actualizado correctamente");
-    //   } else {
-    //     await EventAPI.create(payload);
-    //     toast.success("✅ Evento creado correctamente");
-    //   }
-
-    //   onClose();           // cierra el modal
-    //   onSave?.();          // <-- notifica al padre que recargue eventos
-    //   reset();             // limpia el formulario
-    // } catch (error) {
-    //   console.error("Error al guardar el evento:", error);
-    //   toast.error("❌ Ocurrió un error al guardar el evento");
-    // }
   };
 
   const handleClose = () => {
@@ -179,7 +183,7 @@ export const EventForm: React.FC<Props> = ({
   if (errorEstados) return <div className="text-red-500">{errorEstados}</div>;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Información básica */}
       <section className="space-y-4">
         <h3 className="text-lg font-semibold">Información Básica</h3>
@@ -204,7 +208,6 @@ export const EventForm: React.FC<Props> = ({
             className="w-full rounded-md border px-3 py-2 min-h-[100px] resize-none"
             disabled={isReadOnly}
           />
-
           {errors.description && (
             <p className="text-red-500 text-sm">{errors.description?.message}</p>
           )}
@@ -300,21 +303,18 @@ export const EventForm: React.FC<Props> = ({
             <Label htmlFor="estadoId">Estado</Label>
             <select
               {...register("estadoId", { 
-                valueAsNumber: true, // Convierte el valor a número
-                required: "El estado es requerido", // Asegura que el campo no esté vacío
+                valueAsNumber: true,
+                required: "El estado es requerido",
               })}
               className="w-full px-3 py-2 border rounded-lg"
               disabled={isReadOnly}
             >
-              {/* <option value="">Seleccione un estado</option> */}
               {estados.map((estado) => (
                 <option key={estado.id} value={estado.id}>
                   {estado.nombre}
                 </option>
               ))}
             </select>
-
-            {/* Mostrar el error si existe */}
             {errors.estadoId && (
               <p className="text-red-500 text-sm">{errors.estadoId.message}</p>
             )}
@@ -366,7 +366,7 @@ export const EventForm: React.FC<Props> = ({
         </div>
       </section>
 
-      {/* NUEVO CAMPO: informacionUtil */}
+      {/* Información Útil */}
       <div className="space-y-2">
         <Label htmlFor="informacionUtil" className="flex items-center gap-2">
           <FileText className="h-4 w-4" /> Información Útil
@@ -383,177 +383,157 @@ export const EventForm: React.FC<Props> = ({
         )}
       </div>
 
-      {/* Links */}    
-      <section className="space-y-4">
+      {/* NUEVA SECCIÓN: Archivos y Multimedia */}
+      <section className="space-y-6">
         <h3 className="text-lg font-semibold flex items-center gap-2">
-          <LinkIcon className="h-5 w-5" /> Links
+          <Upload className="h-5 w-5" /> Archivos y Multimedia
         </h3>
-        <div className="space-y-2">
-          {linksFieldArray.fields.map((field, index) => (
-            <div key={field.id} className="flex items-center gap-2">
-              <Input
-                {...register(`links.${index}` as const)}
-                placeholder="Enlace relacionado"
-                disabled={isReadOnly}
-              />
+
+        {/* Fotos */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label className="flex items-center gap-2">
+              <Image className="h-4 w-4" /> Fotos
+            </Label>
+            {!isReadOnly && (
               <Button
                 type="button"
-                variant="destructive"
-                size="icon"
-                onClick={() => linksFieldArray.remove(index)}
-                disabled={isReadOnly}
+                variant="outline"
+                size="sm"
+                onClick={() => appendFoto({ file: null, preview: null })}
               >
-                <Trash2 className="h-4 w-4" />
+                <Plus className="h-4 w-4 mr-1" />
+                Agregar Foto
               </Button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => linksFieldArray.append("")}
-            disabled={isReadOnly}
-          >
-            <PlusCircle className="h-4 w-4 mr-2" /> Añadir link
-          </Button>
-        </div>
-      </section>
-
-      {/* Fotos */}
-        <section className="space-y-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <ImageIcon className="h-5 w-5" /> Fotos
-          </h3>
-          <div className="space-y-2">
-            {fotosFieldArray.fields.map((field, index) => (
-              <div key={field.id} className="flex items-center gap-2">
-                {/* Preview de la imagen */}
-                {watch(`fotos.${index}`)?.preview && (
-                  <img
-                    src={watch(`fotos.${index}`).preview}
-                    alt="Preview"
-                    className="w-20 h-20 object-cover rounded"
-                  />
-                )}
-
-                {/* Botón de subir imagen */}
-                <label className="flex-1 flex items-center justify-between px-4 py-2 border rounded-lg cursor-pointer bg-white hover:bg-gray-100">
-                  <span className="truncate">
-                    {watch(`fotos.${index}`)?.file?.name || "Selecciona una foto"}
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-
-                      // Guardar el objeto file y la URL de preview
-                      setValue(`fotos.${index}`, {
-                        file,
-                        preview: URL.createObjectURL(file),
-                      });
-                    }}
-                    disabled={isReadOnly}
-                  />
-                </label>
-
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => fotosFieldArray.remove(index)}
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {fotosFields.map((field, index) => (
+              <div key={field.id} className="relative border rounded-lg p-4 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Foto {index + 1}</span>
+                  {!isReadOnly && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFoto(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFotoChange(index, e.target.files?.[0] || null)}
                   disabled={isReadOnly}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                />
+                
+                {watch(`fotos.${index}.preview`) && (
+                  <div className="mt-2">
+                    <img
+                      src={watch(`fotos.${index}.preview`)}
+                      alt={`Preview ${index + 1}`}
+                      className="w-full h-32 object-cover rounded"
+                    />
+                  </div>
+                )}
               </div>
             ))}
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => fotosFieldArray.append({ file: null, preview: null })}
-              disabled={isReadOnly}
-            >
-              <PlusCircle className="h-4 w-4 mr-2" /> Añadir foto
-            </Button>
           </div>
-        </section>
+        </div>
 
-
-      {/* Archivos */}
-      <section className="space-y-4">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          <FileIcon className="h-5 w-5" /> Archivos
-        </h3>
-
-        {archivosFieldArray.fields.map((field, index) => (
-          <div key={field.id} className="flex items-center gap-2">
-            {/* Preview con icono según tipo de archivo */}
-            {watch(`archivos.${index}`) && (
-              <div className="w-10 h-10 flex items-center justify-center border rounded bg-gray-100">
-                {(() => {
-                  const file = watch(`archivos.${index}`);
-                  if (!file) return null;
-                  const ext = file.name.split(".").pop()?.toLowerCase();
-                    switch (ext) {
-                      case "pdf":
-                        return <span className="text-red-500 text-xl">📄</span>;
-                      case "doc":
-                      case "docx":
-                        return <span className="text-blue-500 text-xl">📄</span>;
-                      default:
-                        return <span className="text-gray-500 text-xl">📁</span>;
-                    }
-                })()}
-              </div>
+        {/* Archivos */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label className="flex items-center gap-2">
+              <File className="h-4 w-4" /> Archivos
+            </Label>
+            {!isReadOnly && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => appendArchivo({ file: null })}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Agregar Archivo
+              </Button>
             )}
-
-
-            {/* Botón personalizado */}
-            <label className="flex-1 flex items-center justify-between px-4 py-2 border rounded-lg cursor-pointer bg-white hover:bg-gray-100">
-              <span className="truncate">
-                {watch(`archivos.${index}`)?.name ||
-                  "Selecciona un archivo (.pdf, .doc, .docx)"}
-              </span>
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-
-                  // Guardar el objeto File completo
-                  setValue(`archivos.${index}`, file);
-                }}
-                disabled={isReadOnly}
-              />
-            </label>
-
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              onClick={() => archivosFieldArray.remove(index)}
-              disabled={isReadOnly}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
           </div>
-        ))}
+          
+          <div className="space-y-2">
+            {archivosFields.map((field, index) => (
+              <div key={field.id} className="flex items-center gap-2 p-3 border rounded">
+                <File className="h-4 w-4 text-gray-500" />
+                <Input
+                  type="file"
+                  onChange={(e) => handleArchivoChange(index, e.target.files?.[0] || null)}
+                  disabled={isReadOnly}
+                  className="flex-1"
+                />
+                {!isReadOnly && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeArchivo(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => archivosFieldArray.append("")}
-          disabled={isReadOnly}
-        >
-          <PlusCircle className="h-4 w-4 mr-2" /> Añadir archivo
-        </Button>
+        {/* Links */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label className="flex items-center gap-2">
+              <LinkIcon className="h-4 w-4" /> Enlaces
+            </Label>
+            {!isReadOnly && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => appendLink({ url: "" })}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Agregar Enlace
+              </Button>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            {linksFields.map((field, index) => (
+              <div key={field.id} className="flex items-center gap-2">
+                <LinkIcon className="h-4 w-4 text-gray-500" />
+                <Input
+                  {...register(`links.${index}.url`)}
+                  placeholder="https://ejemplo.com"
+                  disabled={isReadOnly}
+                  className="flex-1"
+                />
+                {!isReadOnly && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeLink(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
-
         
       {/* Apariencia */}
       <section className="space-y-4">

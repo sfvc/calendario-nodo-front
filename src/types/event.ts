@@ -76,9 +76,9 @@ export interface CalendarEvent {
   horaFin?: string | null;
 
     // NUEVAS PROPIEDADES PARA useFieldArray
-  fotos: { file?: File | null; preview?: string | null }[]; // 👈 objetos
-  archivos: (File | null)[];                                // 👈 array de File
-  links: string[];                                          // 👈 array de strings
+  fotos: { file?: File | null; preview?: string | null }[];
+  archivos: (File | null)[];
+  links: string[];
 }
 
 
@@ -99,7 +99,7 @@ export interface CalendarEventFormDTO {
   cobertura?: string;
   informacionUtil?: string;
   userId?: string;
-  fotos: { file?: File | null; preview?: string | null }[]; // 👈 objetos
-  archivos:  { file?: File | null }[]; // 👈 array de File
-  links: { url: string }[];  // 👈 array de strings
+  fotos: { file?: File | null; preview?: string | null }[];
+  archivos:  { file?: File | null }[]
+  links: { url: string }[];
 }
