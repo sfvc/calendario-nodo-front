@@ -11,8 +11,10 @@ export const EventAPI = {
     return response.data; // <-- devuelvo tal cual, sin formatear
   },
 
-  create: async (data: any): Promise<EventResponse> => {
-    const response = await api.post(BASE_PATH, data);
+  create: async (data: FormData): Promise<EventResponse> => {
+    const response = await api.post(BASE_PATH, data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return response.data;
   },
 

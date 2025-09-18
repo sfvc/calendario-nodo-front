@@ -11,6 +11,7 @@ import { colorOptions } from "@/constants/colors-options";
 import type { CalendarEvent, CalendarEventFormDTO } from "@/types/event";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { EventAPI } from "@/lib/eventApi";
 
 type EstadoEvento = {
   id: number;
@@ -52,9 +53,13 @@ export const EventForm: React.FC<Props> = ({
     fechaFin: safeToISODate(event.fechaFin),
     horaInicio: event.horaInicio ?? "",
     horaFin: event.horaFin ?? "",
-    informacionUtil: "",
-    fotos: event.fotos?.length ? event.fotos : [],
-    archivos: event.archivos?.length ? event.archivos.map(file => ({ file })) : [],
+    informacionUtil: event.informacionUtil ?? "",
+    fotos: event.fotos?.length
+      ? event.fotos.map((url) => ({ file: null, preview: url })) // 👈 importante
+      : [],
+    archivos: event.archivos?.length
+      ? event.archivos.map(f => ({ file: null, url: f })) // url desde S3
+      : [],
     links: event.links?.length ? event.links.map(url => ({ url })) : [],
   });
 
@@ -141,10 +146,8 @@ export const EventForm: React.FC<Props> = ({
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setValue(`fotos.${index}`, {
-          file: file,
-          preview: e.target?.result as string
-        });
+        setValue(`fotos.${index}.file`, file);
+        setValue(`fotos.${index}.preview`, e.target?.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -161,18 +164,76 @@ export const EventForm: React.FC<Props> = ({
       return;
     }
 
-    const fechaInicioDate = new Date(data.fechaInicio);
-    const fechaFinDate = new Date(data.fechaFin);
+    try {
+      const formData = new FormData();
 
-    const payload: CalendarEvent = {
-      ...data,
-      fechaInicio: fechaInicioDate,
-      fechaFin: fechaFinDate,
-      userId: user.id,
-    };
+      // Campos de texto
+      formData.append("userId", user.id);
+      formData.append("title", data.title);
+      if (data.description) formData.append("description", data.description);
+      formData.append("fechaInicio", data.fechaInicio);
+      formData.append("fechaFin", data.fechaFin);
+      if (data.horaInicio) formData.append("horaInicio", data.horaInicio);
+      if (data.horaFin) formData.append("horaFin", data.horaFin);
+      if (data.color) formData.append("color", data.color);
+      formData.append("allDay", (data.allDay ?? false).toString());
+      if (data.estadoId) formData.append("estadoId", data.estadoId.toString());
+      if (data.organizacion) formData.append("organizacion", data.organizacion);
+      if (data.cantidadPersonas)
+        formData.append("cantidadPersonas", data.cantidadPersonas.toString());
+      if (data.espacioUtilizar) formData.append("espacioUtilizar", data.espacioUtilizar);
+      if (data.requerimientos) formData.append("requerimientos", data.requerimientos);
+      if (data.cobertura) formData.append("cobertura", data.cobertura);
+      if (data.informacionUtil) formData.append("informacionUtil", data.informacionUtil);
 
-    console.log(payload);
+      // Archivos
+      if (data.archivos && data.archivos.length > 0) {
+        data.archivos.forEach(({ file }) => {
+          if (file) formData.append("archivos", file);
+        });
+      }
+
+      // Fotos
+      if (data.fotos && data.fotos.length > 0) {
+        data.fotos.forEach(({ file }) => {
+          if (file) formData.append("fotos", file);
+        });
+      }
+
+      // Links como array
+      if (data.links && data.links.length > 0) {
+        data.links.forEach(({ url }) => {
+          if (url) formData.append("links[]", url); // 👈 aquí usamos links[]
+        });
+      }
+
+      // 🔍 Debug
+      console.log("📤 FormData enviado:");
+      for (const [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
+
+      if (event) {
+        // Actualizar evento
+        await EventAPI.update(event.id, formData);
+        toast.success("✅ Evento actualizado correctamente");
+      } else {
+        // Crear evento
+        await EventAPI.create(formData);
+        toast.success("✅ Evento creado correctamente");
+      }
+
+      onClose();
+      onSave?.();
+      reset();
+    } catch (error: any) {
+      console.error("Error al guardar el evento:", error);
+      toast.error(
+        error?.response?.data?.message || "❌ Ocurrió un error al guardar el evento"
+      );
+    }
   };
+
 
   const handleClose = () => {
     reset();
@@ -400,7 +461,7 @@ export const EventForm: React.FC<Props> = ({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => appendFoto({ file: null, preview: null })}
+                onClick={() => appendFoto({ id: Date.now(), file: null, preview: null })}
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Agregar Foto
@@ -432,10 +493,11 @@ export const EventForm: React.FC<Props> = ({
                   disabled={isReadOnly}
                 />
                 
-                {watch(`fotos.${index}.preview`) && (
+                {/* Mostramos la preview: puede ser URL existente o la nueva */}
+                {field.preview && (
                   <div className="mt-2">
                     <img
-                      src={watch(`fotos.${index}.preview`)}
+                      src={field.preview}
                       alt={`Preview ${index + 1}`}
                       className="w-full h-32 object-cover rounded"
                     />
@@ -447,27 +509,28 @@ export const EventForm: React.FC<Props> = ({
         </div>
 
         {/* Archivos */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label className="flex items-center gap-2">
-              <File className="h-4 w-4" /> Archivos
-            </Label>
-            {!isReadOnly && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => appendArchivo({ file: null })}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Agregar Archivo
-              </Button>
-            )}
-          </div>
-          
-          <div className="space-y-2">
-            {archivosFields.map((field, index) => (
-              <div key={field.id} className="flex items-center gap-2 p-3 border rounded">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Label className="flex items-center gap-2">
+            <File className="h-4 w-4" /> Archivos
+          </Label>
+          {!isReadOnly && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => appendArchivo({ file: null })}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Agregar Archivo
+            </Button>
+          )}
+        </div>
+        
+        <div className="space-y-2">
+          {archivosFields.map((field, index) => (
+            <div key={field.id} className="flex flex-col gap-2 p-3 border rounded">
+              <div className="flex items-center gap-2">
                 <File className="h-4 w-4 text-gray-500" />
                 <Input
                   type="file"
@@ -486,9 +549,30 @@ export const EventForm: React.FC<Props> = ({
                   </Button>
                 )}
               </div>
-            ))}
-          </div>
+
+              {/* Preview del archivo */}
+              {(watch(`archivos.${index}.file`) || watch(`archivos.${index}.url`)) && (
+                <div className="text-sm text-gray-700 mt-1 flex items-center gap-2">
+                  <File className="h-4 w-4" />
+                  <span>
+                    {watch(`archivos.${index}.file`)?.name || (
+                      <a
+                        href={watch(`archivos.${index}.url`)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline text-blue-600"
+                      >
+                        {watch(`archivos.${index}.url`)?.split("/").pop()}
+                      </a>
+                    )}
+                  </span>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
+      </div>
+
 
         {/* Links */}
         <div className="space-y-4">
