@@ -154,15 +154,23 @@ export const EventForm: React.FC<Props> = ({
   };
 
   // Función para manejar la carga de archivos
-  const handleArchivoChange = (index: number, file: File | null) => {
-    setValue(`archivos.${index}.file`, file);
-  };
+    const handleArchivoChange = (index: number, file: File | null) => {
+      if (file) {
+        setValue(`archivos.${index}`, { file, url: "" }, { shouldValidate: true });
+      } else {
+        // Si limpias el input, puedes decidir dejarlo vacío
+        setValue(`archivos.${index}`, { file: null, url: "" });
+      }
+    };
 
   const onSubmit = async (data: CalendarEventFormDTO) => {
     if (!user) {
       toast.error("Usuario no autenticado");
       return;
     }
+
+    // 👀 Aquí logueamos los archivos que se van a enviar
+    console.log("📂 Archivos actuales en el formulario:", data.archivos);
 
     try {
       const formData = new FormData();
@@ -187,15 +195,21 @@ export const EventForm: React.FC<Props> = ({
       if (data.informacionUtil) formData.append("informacionUtil", data.informacionUtil);
 
       // Archivos
-      if (data.archivos && data.archivos.length > 0) {
-        data.archivos.forEach(({ file }) => {
-          if (file) formData.append("archivos", file);
-        });
-      }
+      // Archivos como array de objetos con file o url
+        if (data.archivos && data.archivos.length > 0) {
+          data.archivos.forEach(({ file, url }) => {
+            if (file) {
+              formData.append("archivos[]", file); // archivo nuevo
+            } else if (url) {
+              formData.append("archivos[]", url); // archivo existente por URL
+            }
+          });
+        }
 
       // Fotos
       if (data.fotos && data.fotos.length > 0) {
-        data.fotos.forEach(({ file }) => {
+        data.fotos.forEach(({ file }, idx) => {
+          console.log(`🖼️ Foto ${idx + 1}:`, file);
           if (file) formData.append("fotos", file);
         });
       }
@@ -203,22 +217,20 @@ export const EventForm: React.FC<Props> = ({
       // Links como array
       if (data.links && data.links.length > 0) {
         data.links.forEach(({ url }) => {
-          if (url) formData.append("links[]", url); // 👈 aquí usamos links[]
+          if (url) formData.append("links[]", url);
         });
       }
 
-      // 🔍 Debug
+      // 🔍 Debug del FormData final
       console.log("📤 FormData enviado:");
       for (const [key, value] of formData.entries()) {
         console.log(key, value);
       }
 
       if (event) {
-        // Actualizar evento
         await EventAPI.update(event.id, formData);
         toast.success("✅ Evento actualizado correctamente");
       } else {
-        // Crear evento
         await EventAPI.create(formData);
         toast.success("✅ Evento creado correctamente");
       }
@@ -233,7 +245,6 @@ export const EventForm: React.FC<Props> = ({
       );
     }
   };
-
 
   const handleClose = () => {
     reset();
