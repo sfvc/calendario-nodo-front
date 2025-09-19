@@ -170,7 +170,7 @@ export const EventForm: React.FC<Props> = ({
     }
 
     // 👀 Aquí logueamos los archivos que se van a enviar
-    console.log("📂 Archivos actuales en el formulario:", data.archivos);
+    console.log("📂 Archivos actuales en el formulario:", data);
 
     try {
       const formData = new FormData();
@@ -195,16 +195,12 @@ export const EventForm: React.FC<Props> = ({
       if (data.informacionUtil) formData.append("informacionUtil", data.informacionUtil);
 
       // Archivos
-      // Archivos como array de objetos con file o url
-        if (data.archivos && data.archivos.length > 0) {
-          data.archivos.forEach(({ file, url }) => {
-            if (file) {
-              formData.append("archivos[]", file); // archivo nuevo
-            } else if (url) {
-              formData.append("archivos[]", url); // archivo existente por URL
-            }
-          });
-        }
+      if (data.archivos && data.archivos.length > 0) {
+        data.archivos.forEach(({ file, url }, idx) => {
+          console.log(`➡️ Archivo ${idx + 1}:`, { file, url });
+          if (file) formData.append("archivos", file);
+        });
+      }
 
       // Fotos
       if (data.fotos && data.fotos.length > 0) {
