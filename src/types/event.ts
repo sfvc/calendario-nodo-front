@@ -100,6 +100,6 @@ export interface CalendarEventFormDTO {
   informacionUtil?: string;
   userId?: string;
   fotos: { file?: File | null; preview?: string | null }[];
-  archivos:  { file?: File | null }[]
+  archivos: Array<{ file: File | null; url?: string }>;
   links: { url: string }[];
 }

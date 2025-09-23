@@ -54,11 +54,13 @@ export const EventForm: React.FC<Props> = ({
     horaInicio: event.horaInicio ?? "",
     horaFin: event.horaFin ?? "",
     informacionUtil: event.informacionUtil ?? "",
+    // 🔧 Para fotos: si viene URL, va en preview (sin file)
     fotos: event.fotos?.length
-      ? event.fotos.map((url) => ({ file: null, preview: url })) // 👈 importante
+      ? event.fotos.map((url) => ({ file: null, preview: url }))
       : [],
+    // 🔧 Para archivos: si viene URL, va en url (sin file)
     archivos: event.archivos?.length
-      ? event.archivos.map(f => ({ file: null, url: f })) // url desde S3
+      ? event.archivos.map(url => ({ file: null, url }))
       : [],
     links: event.links?.length ? event.links.map(url => ({ url })) : [],
   });
@@ -169,13 +171,12 @@ export const EventForm: React.FC<Props> = ({
       return;
     }
 
-    // 👀 Aquí logueamos los archivos que se van a enviar
-    console.log("📂 Archivos actuales en el formulario:", data);
+    console.log("📂 Datos del formulario:", data);
 
     try {
       const formData = new FormData();
 
-      // Campos de texto
+      // ... (otros campos de texto permanecen igual)
       formData.append("userId", user.id);
       formData.append("title", data.title);
       if (data.description) formData.append("description", data.description);
@@ -194,23 +195,61 @@ export const EventForm: React.FC<Props> = ({
       if (data.cobertura) formData.append("cobertura", data.cobertura);
       if (data.informacionUtil) formData.append("informacionUtil", data.informacionUtil);
 
-      // Archivos
+      // 🔧 ARCHIVOS - Separar nuevos archivos de URLs existentes
+      const archivosNuevos: File[] = [];
+      const archivosExistentes: string[] = [];
+      
       if (data.archivos && data.archivos.length > 0) {
         data.archivos.forEach(({ file, url }, idx) => {
           console.log(`➡️ Archivo ${idx + 1}:`, { file, url });
-          if (file) formData.append("archivos", file);
+          if (file) {
+            // Es un archivo nuevo
+            archivosNuevos.push(file);
+          } else if (url) {
+            // Es una URL existente
+            archivosExistentes.push(url);
+          }
         });
       }
 
-      // Fotos
+      // Enviar archivos nuevos como binarios
+      archivosNuevos.forEach((file) => {
+        formData.append("archivos", file);
+      });
+
+      // Enviar URLs existentes como array
+      archivosExistentes.forEach((url) => {
+        formData.append("archivosExistentes[]", url);
+      });
+
+      // 🔧 FOTOS - Separar nuevas fotos de URLs existentes
+      const fotosNuevas: File[] = [];
+      const fotosExistentes: string[] = [];
+      
       if (data.fotos && data.fotos.length > 0) {
-        data.fotos.forEach(({ file }, idx) => {
-          console.log(`🖼️ Foto ${idx + 1}:`, file);
-          if (file) formData.append("fotos", file);
+        data.fotos.forEach(({ file, preview }, idx) => {
+          console.log(`🖼️ Foto ${idx + 1}:`, { file, preview });
+          if (file) {
+            // Es una foto nueva
+            fotosNuevas.push(file);
+          } else if (preview && preview.startsWith('http')) {
+            // Es una URL existente (las URLs del backend empiezan con http)
+            fotosExistentes.push(preview);
+          }
         });
       }
 
-      // Links como array
+      // Enviar fotos nuevas como binarios
+      fotosNuevas.forEach((file) => {
+        formData.append("fotos", file);
+      });
+
+      // Enviar URLs de fotos existentes como array
+      fotosExistentes.forEach((url) => {
+        formData.append("fotosExistentes[]", url);
+      });
+
+      // Links como array (esto permanece igual)
       if (data.links && data.links.length > 0) {
         data.links.forEach(({ url }) => {
           if (url) formData.append("links[]", url);
