@@ -23,7 +23,7 @@ export interface EventResponse {
 
   // NUEVAS PROPIEDADES PARA useFieldArray
   fotos: { file?: File | null; preview?: string | null }[]; // 👈 objetos
-  archivos: (File | null)[];                                // 👈 array de File
+  archivos: { file?: File | null; preview?: string | null }[];                                // 👈 array de File
   links: string[];                                          // 👈 array de strings                   
   
 }
@@ -51,7 +51,7 @@ export interface EventFormData {
 
   // NUEVAS PROPIEDADES PARA useFieldArray
   fotos: { file?: File | null; preview?: string | null }[]; // 👈 objetos
-  archivos: (File | null)[];                                // 👈 array de File
+  archivos: { file?: File | null; preview?: string | null }[];                                // 👈 array de File
   links: string[];                                          // 👈 array de strings                           // para links
 }
 
@@ -77,7 +77,7 @@ export interface CalendarEvent {
 
     // NUEVAS PROPIEDADES PARA useFieldArray
   fotos: { file?: File | null; preview?: string | null }[];
-  archivos: (File | null)[];
+  archivos: { file?: File | null; preview?: string | null }[];
   links: string[];
 }
 
@@ -100,6 +100,6 @@ export interface CalendarEventFormDTO {
   informacionUtil?: string;
   userId?: string;
   fotos: { file?: File | null; preview?: string | null }[];
-  archivos: Array<{ file: File | null; url?: string }>;
+  archivos: { file?: File | null; preview?: string | null }[];
   links: { url: string }[];
 }

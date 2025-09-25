@@ -60,9 +60,7 @@ export const eventFormSchema = z
 
     // Descripción del evento (opcional)
     description: z
-      .string()
-      .min(1, "La descripción es requerida si se proporciona")
-      .optional(),
+      .string().optional(),
 
     // Color del evento en formato hexadecimal
     color: z

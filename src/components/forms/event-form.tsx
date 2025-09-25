@@ -60,7 +60,7 @@ export const EventForm: React.FC<Props> = ({
       : [],
     // 🔧 Para archivos: si viene URL, va en url (sin file)
     archivos: event.archivos?.length
-      ? event.archivos.map(url => ({ file: null, url }))
+      ? event.archivos.map(url => ({ file: null, preview:url }))
       : [],
     links: event.links?.length ? event.links.map(url => ({ url })) : [],
   });
@@ -156,14 +156,16 @@ export const EventForm: React.FC<Props> = ({
   };
 
   // Función para manejar la carga de archivos
-    const handleArchivoChange = (index: number, file: File | null) => {
-      if (file) {
-        setValue(`archivos.${index}`, { file, url: "" }, { shouldValidate: true });
-      } else {
-        // Si limpias el input, puedes decidir dejarlo vacío
-        setValue(`archivos.${index}`, { file: null, url: "" });
-      }
-    };
+  const handleArchivoChange = (index: number, file: File | null) => {
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setValue(`archivos.${index}.file`, file);
+        setValue(`archivos.${index}.preview`, e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const onSubmit = async (data: CalendarEventFormDTO) => {
     if (!user) {
@@ -198,20 +200,16 @@ export const EventForm: React.FC<Props> = ({
       // 🔧 ARCHIVOS - Separar nuevos archivos de URLs existentes
       const archivosNuevos: File[] = [];
       const archivosExistentes: string[] = [];
-      
-      if (data.archivos && data.archivos.length > 0) {
-        data.archivos.forEach(({ file, url }, idx) => {
-          console.log(`➡️ Archivo ${idx + 1}:`, { file, url });
-          if (file) {
-            // Es un archivo nuevo
-            archivosNuevos.push(file);
-          } else if (url) {
-            // Es una URL existente
-            archivosExistentes.push(url);
-          }
-        });
-      }
 
+    if (data.archivos && data.archivos.length > 0) {
+      data.archivos.forEach(({ file, preview }) => {
+        if (file) {
+          archivosNuevos.push(file);
+        } else if (preview) {  // <-- quitar startsWith('http')
+          archivosExistentes.push(preview);
+        }
+      });
+    }
       // Enviar archivos nuevos como binarios
       archivosNuevos.forEach((file) => {
         formData.append("archivos", file);
@@ -507,7 +505,7 @@ export const EventForm: React.FC<Props> = ({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => appendFoto({ id: Date.now(), file: null, preview: null })}
+                onClick={() => appendFoto({ file: null, preview: null })}
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Agregar Foto
@@ -555,69 +553,65 @@ export const EventForm: React.FC<Props> = ({
         </div>
 
         {/* Archivos */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <Label className="flex items-center gap-2">
-            <File className="h-4 w-4" /> Archivos
-          </Label>
-          {!isReadOnly && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => appendArchivo({ file: null })}
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Agregar Archivo
-            </Button>
-          )}
-        </div>
-        
-        <div className="space-y-2">
-          {archivosFields.map((field, index) => (
-            <div key={field.id} className="flex flex-col gap-2 p-3 border rounded">
-              <div className="flex items-center gap-2">
-                <File className="h-4 w-4 text-gray-500" />
-                <Input
-                  type="file"
-                  onChange={(e) => handleArchivoChange(index, e.target.files?.[0] || null)}
-                  disabled={isReadOnly}
-                  className="flex-1"
-                />
-                {!isReadOnly && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeArchivo(index)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label className="flex items-center gap-2">
+              <File className="h-4 w-4" /> Archivos
+            </Label>
+            {!isReadOnly && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => appendArchivo({ file: null, preview: null })}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Agregar Archivo
+              </Button>
+            )}
+          </div>
 
-              {/* Preview del archivo */}
-              {(watch(`archivos.${index}.file`) || watch(`archivos.${index}.url`)) && (
-                <div className="text-sm text-gray-700 mt-1 flex items-center gap-2">
-                  <File className="h-4 w-4" />
-                  <span>
-                    {watch(`archivos.${index}.file`)?.name || (
-                      <a
-                        href={watch(`archivos.${index}.url`)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline text-blue-600"
-                      >
-                        {watch(`archivos.${index}.url`)?.split("/").pop()}
+          <div className="space-y-2">
+            {archivosFields.map((field, index) => (
+              <div key={field.id} className="flex flex-col gap-2 p-3 border rounded">
+                <div className="flex items-center gap-2">
+                  <File className="h-4 w-4 text-gray-500" />
+                  <Input
+                    type="file"
+                    onChange={(e) => handleArchivoChange(index, e.target.files?.[0] || null)}
+                    disabled={isReadOnly}
+                    className="flex-1"
+                  />
+                  {!isReadOnly && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeArchivo(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+
+                {/* Preview del archivo */}
+                {field.preview && (
+                  <div className="text-sm text-gray-700 mt-1 flex items-center gap-2">
+                    <File className="h-4 w-4" />
+                    {field.file ? (
+                      <span>{field.file.name}</span>
+                    ) : (
+                      <a href={field.preview} target="_blank" rel="noopener noreferrer" className="underline text-blue-600">
+                        {field.preview.split("/").pop()}
                       </a>
                     )}
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+
 
 
         {/* Links */}

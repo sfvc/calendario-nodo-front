@@ -40,77 +40,73 @@ export function EventCalendar() {
         const dateB = new Date(`${b.fechaInicio}T${b.horaInicio ?? "00:00"}:00`);
         return dateA.getTime() - dateB.getTime();
       });
-      // Transformamos los eventos para FullCalendar
-        const formattedEvents = data.map(evt => {
-          let start: Date;
-          let end: Date;
 
-          const addOneDay = (date: Date): Date => {
-            const result = new Date(date);
-            result.setDate(result.getDate() + 1);
-            return result;
-          };
-          const startDate = addOneDay(new Date(evt.fechaInicio));
-          const endDate = addOneDay(new Date(evt.fechaFin));
+      const formattedEvents = data.map(evt => {
+        let start: Date;
+        let end: Date;
 
+        const addOneDay = (date: Date): Date => {
+          const result = new Date(date);
+          result.setDate(result.getDate() + 1);
+          return result;
+        };
 
-          if (evt.allDay) {
-            // Evento de todo el día → usar solo fecha (sin hora)
-            // Y adelantar end en un día porque FullCalendar no lo incluye
-            start = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-            end = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-          } else {
-            // Evento con hora → combinar fecha y hora
-            const [hInicio, mInicio] = (evt.horaInicio ?? "00:00").split(":").map(Number);
-            const [hFin, mFin] = (evt.horaFin ?? "00:00").split(":").map(Number);
+        const startDate = addOneDay(new Date(evt.fechaInicio));
+        const endDate = addOneDay(new Date(evt.fechaFin));
 
-            start = new Date(
-              startDate.getFullYear(),
-              startDate.getMonth(),
-              startDate.getDate(),
-              hInicio,
-              mInicio
-            );
+        if (evt.allDay) {
+          // Evento de todo el día → usar solo fecha
+          start = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+          end = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+        } else {
+          const [hInicio, mInicio] = (evt.horaInicio ?? "00:00").split(":").map(Number);
+          const [hFin, mFin] = (evt.horaFin ?? "00:00").split(":").map(Number);
 
-            end = new Date(
-              endDate.getFullYear(),
-              endDate.getMonth(),
-              endDate.getDate(),
-              hFin,
-              mFin
-            );
-          }
+          start = new Date(
+            startDate.getFullYear(),
+            startDate.getMonth(),
+            startDate.getDate(),
+            hInicio,
+            mInicio
+          );
 
-          return {
-            id: evt.id,
-            title: evt.title,
-            start,
-            end,
-            allDay: evt.allDay ?? false,
-            color: evt.color ?? "#3b82f6",
-            extendedProps: {
-              description: evt.description,
-              estado: evt.estado,
-              estadoId: evt.estadoId,
-              userId: evt.userId,
-              organizacion: evt.organizacion,
-              cantidadPersonas: evt.cantidadPersonas,
-              espacioUtilizar: evt.espacioUtilizar,
-              requerimientos: evt.requerimientos,
-              cobertura: evt.cobertura,
-              fechaInicio: evt.fechaInicio,
-              fechaFin: evt.fechaFin,
-              horaInicio: evt.horaInicio,
-              horaFin: evt.horaFin,
-              informacionUtil: evt.informacionUtil,
-              fotos: evt.fotos,
-              archivos: evt.archivos,
-              links: evt.links,
-            },
-          };
-        });
+          end = new Date(
+            endDate.getFullYear(),
+            endDate.getMonth(),
+            endDate.getDate(),
+            hFin,
+            mFin
+          );
+        }
 
-
+        return {
+          id: evt.id,
+          title: evt.title,
+          start,
+          end,
+          allDay: evt.allDay ?? false,
+          color: evt.color ?? "#3b82f6",
+          extendedProps: {
+            description: evt.description,
+            estado: evt.estado,
+            estadoId: evt.estadoId,
+            userId: evt.userId,
+            organizacion: evt.organizacion,
+            cantidadPersonas: evt.cantidadPersonas,
+            espacioUtilizar: evt.espacioUtilizar,
+            requerimientos: evt.requerimientos,
+            cobertura: evt.cobertura,
+            fechaInicio: evt.fechaInicio,
+            fechaFin: evt.fechaFin,
+            horaInicio: evt.horaInicio,
+            horaFin: evt.horaFin,
+            informacionUtil: evt.informacionUtil,
+            fotos: evt.fotos,
+            archivos: evt.archivos,
+            links: evt.links,
+          },
+        };
+      });
 
       console.log("Eventos formateados para FullCalendar:", formattedEvents);
       setEvents(formattedEvents);
@@ -121,6 +117,7 @@ export function EventCalendar() {
       setIsLoading(false);
     }
   };
+
 
   const handleDelete = async (id: string) => {
     try {
@@ -236,8 +233,25 @@ export function EventCalendar() {
             timeZone="local"
             buttonText={{ today: "Hoy", month: "Mes", week: "Semana", day: "Día" }}
             dayHeaderClassNames="bg-muted text-foreground font-medium"
-            dayCellClassNames={(arg) => (arg.date.getDay() === 0 || arg.date.getDay() === 6 ? ["fc-weekend"] : [])}
+            dayCellClassNames={(arg) =>
+              arg.date.getDay() === 0 || arg.date.getDay() === 6
+                ? ["fc-weekend"]
+                : []
+            }
             eventClassNames="cursor-pointer hover:opacity-80 transition-opacity"
+            eventOrder="start"
+            eventContent={(arg) => {
+              const props = arg.event.extendedProps;
+
+              const start = props.horaInicio ?? "";
+              const end = props.horaFin ?? "";
+
+              return {
+                html: `<div>
+                  <b>${start}${end ? " - " + end : ""}</b> ${arg.event.title}
+                </div>`,
+              };
+            }}
           />
         </div>
       </div>
