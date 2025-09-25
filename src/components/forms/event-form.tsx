@@ -1,7 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FileText, MapPin, Shield, Users, Upload, Link as LinkIcon, Image, File, X, Plus } from "lucide-react";
+import {
+  FileText,
+  MapPin,
+  Shield,
+  Users,
+  Upload,
+  Link as LinkIcon,
+  Image,
+  File,
+  X,
+  Plus,
+} from "lucide-react";
 import { Label } from "@/components/ui/Label";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -35,7 +46,7 @@ export const EventForm: React.FC<Props> = ({
   isEditing,
   handleDelete,
   onClose,
-  onSave
+  onSave,
 }) => {
   const { user } = useAuth();
   const [estados, setEstados] = useState<EstadoEvento[]>([]);
@@ -49,6 +60,7 @@ export const EventForm: React.FC<Props> = ({
 
   const mapEventToFormDTO = (event: CalendarEvent): CalendarEventFormDTO => ({
     ...event,
+
     fechaInicio: safeToISODate(event.fechaInicio),
     fechaFin: safeToISODate(event.fechaFin),
     horaInicio: event.horaInicio ?? "",
@@ -60,9 +72,9 @@ export const EventForm: React.FC<Props> = ({
       : [],
     // 🔧 Para archivos: si viene URL, va en url (sin file)
     archivos: event.archivos?.length
-      ? event.archivos.map(url => ({ file: null, preview:url }))
+      ? event.archivos.map((url) => ({ file: null, preview: url }))
       : [],
-    links: event.links?.length ? event.links.map(url => ({ url })) : [],
+    links: event.links?.length ? event.links.map((url) => ({ url })) : [],
   });
 
   // Cargar estados dinámicos
@@ -114,19 +126,31 @@ export const EventForm: React.FC<Props> = ({
   });
 
   // useFieldArray para manejar arrays dinámicos
-  const { fields: fotosFields, append: appendFoto, remove: removeFoto } = useFieldArray({
+  const {
+    fields: fotosFields,
+    append: appendFoto,
+    remove: removeFoto,
+  } = useFieldArray({
     control,
-    name: "fotos"
+    name: "fotos",
   });
 
-  const { fields: archivosFields, append: appendArchivo, remove: removeArchivo } = useFieldArray({
+  const {
+    fields: archivosFields,
+    append: appendArchivo,
+    remove: removeArchivo,
+  } = useFieldArray({
     control,
-    name: "archivos"
+    name: "archivos",
   });
 
-  const { fields: linksFields, append: appendLink, remove: removeLink } = useFieldArray({
+  const {
+    fields: linksFields,
+    append: appendLink,
+    remove: removeLink,
+  } = useFieldArray({
     control,
-    name: "links"
+    name: "links",
   });
 
   // Asignar primer estado si no hay evento
@@ -173,7 +197,7 @@ export const EventForm: React.FC<Props> = ({
       return;
     }
 
-    console.log("📂 Datos del formulario:", data);
+    // console.log("📂 Datos del formulario:", data);
 
     try {
       const formData = new FormData();
@@ -192,24 +216,30 @@ export const EventForm: React.FC<Props> = ({
       if (data.organizacion) formData.append("organizacion", data.organizacion);
       if (data.cantidadPersonas)
         formData.append("cantidadPersonas", data.cantidadPersonas.toString());
-      if (data.espacioUtilizar) formData.append("espacioUtilizar", data.espacioUtilizar);
-      if (data.requerimientos) formData.append("requerimientos", data.requerimientos);
+      if (data.espacioUtilizar)
+        formData.append("espacioUtilizar", data.espacioUtilizar);
+      if (data.requerimientos)
+        formData.append("requerimientos", data.requerimientos);
       if (data.cobertura) formData.append("cobertura", data.cobertura);
-      if (data.informacionUtil) formData.append("informacionUtil", data.informacionUtil);
+      if (data.informacionUtil)
+        formData.append("informacionUtil", data.informacionUtil);
 
       // 🔧 ARCHIVOS - Separar nuevos archivos de URLs existentes
       const archivosNuevos: File[] = [];
       const archivosExistentes: string[] = [];
 
-    if (data.archivos && data.archivos.length > 0) {
-      data.archivos.forEach(({ file, preview }) => {
-        if (file) {
-          archivosNuevos.push(file);
-        } else if (preview) {  // <-- quitar startsWith('http')
-          archivosExistentes.push(preview);
-        }
-      });
-    }
+      console.log(data.archivos);
+      if (data.archivos && data.archivos.length > 0) {
+        data.archivos.forEach(({ file, preview }) => {
+          if (file) {
+            archivosNuevos.push(file);
+          } else if (preview) {
+            // <-- quitar startsWith('http')
+
+            archivosExistentes.push(preview);
+          }
+        });
+      }
       // Enviar archivos nuevos como binarios
       archivosNuevos.forEach((file) => {
         formData.append("archivos", file);
@@ -223,14 +253,14 @@ export const EventForm: React.FC<Props> = ({
       // 🔧 FOTOS - Separar nuevas fotos de URLs existentes
       const fotosNuevas: File[] = [];
       const fotosExistentes: string[] = [];
-      
+
       if (data.fotos && data.fotos.length > 0) {
         data.fotos.forEach(({ file, preview }, idx) => {
-          console.log(`🖼️ Foto ${idx + 1}:`, { file, preview });
+          // console.log(`🖼️ Foto ${idx + 1}:`, { file, preview });
           if (file) {
             // Es una foto nueva
             fotosNuevas.push(file);
-          } else if (preview && preview.startsWith('http')) {
+          } else if (preview && preview.startsWith("http")) {
             // Es una URL existente (las URLs del backend empiezan con http)
             fotosExistentes.push(preview);
           }
@@ -255,10 +285,10 @@ export const EventForm: React.FC<Props> = ({
       }
 
       // 🔍 Debug del FormData final
-      console.log("📤 FormData enviado:");
-      for (const [key, value] of formData.entries()) {
-        console.log(key, value);
-      }
+      // console.log("📤 FormData enviado:");
+      // for (const [key, value] of formData.entries()) {
+      //   console.log(key, value);
+      // }
 
       if (event) {
         await EventAPI.update(event.id, formData);
@@ -274,7 +304,8 @@ export const EventForm: React.FC<Props> = ({
     } catch (error: any) {
       console.error("Error al guardar el evento:", error);
       toast.error(
-        error?.response?.data?.message || "❌ Ocurrió un error al guardar el evento"
+        error?.response?.data?.message ||
+          "❌ Ocurrió un error al guardar el evento"
       );
     }
   };
@@ -314,7 +345,9 @@ export const EventForm: React.FC<Props> = ({
             disabled={isReadOnly}
           />
           {errors.description && (
-            <p className="text-red-500 text-sm">{errors.description?.message}</p>
+            <p className="text-red-500 text-sm">
+              {errors.description?.message}
+            </p>
           )}
         </div>
         <div className="space-y-2">
@@ -326,7 +359,9 @@ export const EventForm: React.FC<Props> = ({
             disabled={isReadOnly}
           />
           {errors.organizacion && (
-            <p className="text-red-500 text-sm mt-1">{errors.organizacion?.message}</p>
+            <p className="text-red-500 text-sm mt-1">
+              {errors.organizacion?.message}
+            </p>
           )}
         </div>
       </section>
@@ -344,7 +379,9 @@ export const EventForm: React.FC<Props> = ({
               disabled={isReadOnly}
             />
             {errors.fechaInicio && (
-              <p className="text-red-500 text-sm">{errors.fechaInicio?.message}</p>
+              <p className="text-red-500 text-sm">
+                {errors.fechaInicio?.message}
+              </p>
             )}
           </div>
           <div className="space-y-2">
@@ -356,7 +393,9 @@ export const EventForm: React.FC<Props> = ({
               disabled={isReadOnly}
             />
             {errors.horaInicio && (
-              <p className="text-red-500 text-sm">{errors.horaInicio?.message}</p>
+              <p className="text-red-500 text-sm">
+                {errors.horaInicio?.message}
+              </p>
             )}
           </div>
           <div className="space-y-2">
@@ -401,13 +440,15 @@ export const EventForm: React.FC<Props> = ({
               disabled={isReadOnly}
             />
             {errors.cantidadPersonas && (
-              <p className="text-red-500 text-sm">{errors.cantidadPersonas?.message}</p>
+              <p className="text-red-500 text-sm">
+                {errors.cantidadPersonas?.message}
+              </p>
             )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="estadoId">Estado</Label>
             <select
-              {...register("estadoId", { 
+              {...register("estadoId", {
                 valueAsNumber: true,
                 required: "El estado es requerido",
               })}
@@ -436,7 +477,9 @@ export const EventForm: React.FC<Props> = ({
             disabled={isReadOnly}
           />
           {errors.espacioUtilizar && (
-            <p className="text-red-500 text-sm">{errors.espacioUtilizar?.message}</p>
+            <p className="text-red-500 text-sm">
+              {errors.espacioUtilizar?.message}
+            </p>
           )}
         </div>
         <div className="space-y-2">
@@ -451,7 +494,9 @@ export const EventForm: React.FC<Props> = ({
             disabled={isReadOnly}
           />
           {errors.requerimientos && (
-            <p className="text-red-500 text-sm">{errors.requerimientos?.message}</p>
+            <p className="text-red-500 text-sm">
+              {errors.requerimientos?.message}
+            </p>
           )}
         </div>
         <div className="space-y-2">
@@ -484,7 +529,9 @@ export const EventForm: React.FC<Props> = ({
           disabled={isReadOnly}
         />
         {errors.informacionUtil && (
-          <p className="text-red-500 text-sm">{errors.informacionUtil?.message}</p>
+          <p className="text-red-500 text-sm">
+            {errors.informacionUtil?.message}
+          </p>
         )}
       </div>
 
@@ -512,10 +559,13 @@ export const EventForm: React.FC<Props> = ({
               </Button>
             )}
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {fotosFields.map((field, index) => (
-              <div key={field.id} className="relative border rounded-lg p-4 space-y-2">
+              <div
+                key={field.id}
+                className="relative border rounded-lg p-4 space-y-2"
+              >
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">Foto {index + 1}</span>
                   {!isReadOnly && (
@@ -529,14 +579,16 @@ export const EventForm: React.FC<Props> = ({
                     </Button>
                   )}
                 </div>
-                
+
                 <Input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => handleFotoChange(index, e.target.files?.[0] || null)}
+                  onChange={(e) =>
+                    handleFotoChange(index, e.target.files?.[0] || null)
+                  }
                   disabled={isReadOnly}
                 />
-                
+
                 {/* Mostramos la preview: puede ser URL existente o la nueva */}
                 {field.preview && (
                   <div className="mt-2">
@@ -553,7 +605,7 @@ export const EventForm: React.FC<Props> = ({
         </div>
 
         {/* Archivos */}
-        <div className="space-y-4">
+        {/* <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label className="flex items-center gap-2">
               <File className="h-4 w-4" /> Archivos
@@ -573,12 +625,17 @@ export const EventForm: React.FC<Props> = ({
 
           <div className="space-y-2">
             {archivosFields.map((field, index) => (
-              <div key={field.id} className="flex flex-col gap-2 p-3 border rounded">
+              <div
+                key={field.id}
+                className="flex flex-col gap-2 p-3 border rounded"
+              >
                 <div className="flex items-center gap-2">
                   <File className="h-4 w-4 text-gray-500" />
                   <Input
                     type="file"
-                    onChange={(e) => handleArchivoChange(index, e.target.files?.[0] || null)}
+                    onChange={(e) =>
+                      handleArchivoChange(index, e.target.files?.[0] || null)
+                    }
                     disabled={isReadOnly}
                     className="flex-1"
                   />
@@ -594,14 +651,18 @@ export const EventForm: React.FC<Props> = ({
                   )}
                 </div>
 
-                {/* Preview del archivo */}
                 {field.preview && (
                   <div className="text-sm text-gray-700 mt-1 flex items-center gap-2">
                     <File className="h-4 w-4" />
                     {field.file ? (
                       <span>{field.file.name}</span>
                     ) : (
-                      <a href={field.preview} target="_blank" rel="noopener noreferrer" className="underline text-blue-600">
+                      <a
+                        href={field.preview}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline text-blue-600"
+                      >
                         {field.preview.split("/").pop()}
                       </a>
                     )}
@@ -610,9 +671,7 @@ export const EventForm: React.FC<Props> = ({
               </div>
             ))}
           </div>
-        </div>
-
-
+        </div> */}
 
         {/* Links */}
         <div className="space-y-4">
@@ -632,7 +691,7 @@ export const EventForm: React.FC<Props> = ({
               </Button>
             )}
           </div>
-          
+
           <div className="space-y-2">
             {linksFields.map((field, index) => (
               <div key={field.id} className="flex items-center gap-2">
@@ -658,7 +717,7 @@ export const EventForm: React.FC<Props> = ({
           </div>
         </div>
       </section>
-        
+
       {/* Apariencia */}
       <section className="space-y-4">
         <h3 className="text-lg font-semibold">Apariencia</h3>
@@ -690,7 +749,12 @@ export const EventForm: React.FC<Props> = ({
               className="botonazul text-white"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Guardando..." : isEditing ? "Actualizar" : "Crear"} Evento
+              {isSubmitting
+                ? "Guardando..."
+                : isEditing
+                ? "Actualizar"
+                : "Crear"}{" "}
+              Evento
             </Button>
             <Button
               type="button"

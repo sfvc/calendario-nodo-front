@@ -212,7 +212,7 @@ export function EventCalendar() {
           )}
         </div>
 
-        <AlertaBanner />
+        {/* <AlertaBanner /> */}
 
         <div className="bg-white p-6 rounded-lg shadow-md border">
           <FullCalendar
@@ -234,22 +234,58 @@ export function EventCalendar() {
             buttonText={{ today: "Hoy", month: "Mes", week: "Semana", day: "Día" }}
             dayHeaderClassNames="bg-muted text-foreground font-medium"
             dayCellClassNames={(arg) =>
-              arg.date.getDay() === 0 || arg.date.getDay() === 6
-                ? ["fc-weekend"]
-                : []
+              arg.date.getDay() === 0 || arg.date.getDay() === 6 ? ["fc-weekend"] : []
             }
             eventClassNames="cursor-pointer hover:opacity-80 transition-opacity"
-            eventOrder="start"
+            eventOrder={(a, b) => {
+              // Ordena primero por fecha de inicio
+              const dateA = new Date(a.start!);
+              const dateB = new Date(b.start!);
+              if (dateA.getTime() !== dateB.getTime()) {
+                return dateA.getTime() - dateB.getTime();
+              }
+
+              // Si es el mismo día, ordena por horaInicio de extendedProps
+              const horaA = a.extendedProps.horaInicio ?? "00:00";
+              const horaB = b.extendedProps.horaInicio ?? "00:00";
+
+              const [hA, mA] = horaA.split(":").map(Number);
+              const [hB, mB] = horaB.split(":").map(Number);
+
+              return hA !== hB ? hA - hB : mA - mB;
+            }}
             eventContent={(arg) => {
               const props = arg.event.extendedProps;
-
               const start = props.horaInicio ?? "";
               const end = props.horaFin ?? "";
 
+              // Estilos de tarjeta
+              const cardStyle = `
+                padding: 2px 4px;
+                border-radius: 8px;
+                background-color: ${arg.event.backgroundColor || "#3b82f6"};
+                color: #fff;
+                font-size: 0.875rem;
+                font-weight: 500;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+              `;
+
+              const timeStyle = `
+                font-size: 0.75rem;
+                font-weight: 600;
+                opacity: 0.85;
+              `;
+
               return {
-                html: `<div>
-                  <b>${start}${end ? " - " + end : ""}</b> ${arg.event.title}
-                </div>`,
+                html: `
+                  <div style="${cardStyle}">
+                    <span style="${timeStyle}">${start}${end ? " - " + end : ""}</span>
+                    <span>${arg.event.title}</span>
+                  </div>
+                `,
               };
             }}
           />
