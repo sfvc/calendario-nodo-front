@@ -12,6 +12,7 @@ const fotoSchema = z.object({
 // Schema para archivos
 const archivoSchema = z.object({
   file: z.instanceof(File).nullable().optional(),
+  preview: z.string().nullable().optional(),
 });
 
 // Schema para links

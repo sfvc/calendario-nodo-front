@@ -234,8 +234,6 @@ export const EventForm: React.FC<Props> = ({
           if (file) {
             archivosNuevos.push(file);
           } else if (preview) {
-            // <-- quitar startsWith('http')
-
             archivosExistentes.push(preview);
           }
         });
@@ -255,7 +253,7 @@ export const EventForm: React.FC<Props> = ({
       const fotosExistentes: string[] = [];
 
       if (data.fotos && data.fotos.length > 0) {
-        data.fotos.forEach(({ file, preview }, idx) => {
+        data.fotos.forEach(({ file, preview }) => {
           // console.log(`🖼️ Foto ${idx + 1}:`, { file, preview });
           if (file) {
             // Es una foto nueva
@@ -605,7 +603,7 @@ export const EventForm: React.FC<Props> = ({
         </div>
 
         {/* Archivos */}
-        {/* <div className="space-y-4">
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label className="flex items-center gap-2">
               <File className="h-4 w-4" /> Archivos
@@ -671,7 +669,7 @@ export const EventForm: React.FC<Props> = ({
               </div>
             ))}
           </div>
-        </div> */}
+        </div>
 
         {/* Links */}
         <div className="space-y-4">
