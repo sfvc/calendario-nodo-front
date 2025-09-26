@@ -152,3 +152,32 @@ button{
 .fc-weekend:hover {
   background-color: #a5d8ff !important; /* azul un poco más intenso al pasar el mouse */
 }
+
+
+@media (max-width: 1023.98px) {
+  /* Tus estilos responsivos aquí */
+  .fc-header-toolbar{
+    flex-direction: column !important;
+    text-align: center;
+  }
+
+  .fc-button-group{
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .fc-toolbar-chunk{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .estadospage-header{
+    flex-direction: column;
+    gap: 20px;
+  }
+}

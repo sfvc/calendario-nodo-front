@@ -193,7 +193,7 @@ export function EventCalendar() {
 
           {user?.email ? (
             <div className="flex flex-col md:flex-row items-start md:items-center gap-3 w-full md:w-auto">
-              <div className="flex flex-wrap gap-3">
+              <nav className="flex flex-wrap gap-3">
                 <Button onClick={() => window.location.reload()} variant="outline" className="bg-white flex items-center gap-2 cursor-pointer">
                   <RotateCw className="h-4 w-4" />
                   Recargar
@@ -204,7 +204,7 @@ export function EventCalendar() {
                 <Link to="/eventos"><Button className="cursor-pointer">Ver todos los Eventos</Button></Link>
                 <Link to="/estados"><Button className="cursor-pointer">+ Crear Estados</Button></Link>
                 {user?.role === "ADMIN" && <Link to="/user"><Button className="cursor-pointer">Crear Usuarios</Button></Link>}
-              </div>
+              </nav>
               <Button className="cursor-pointer" onClick={logout} variant="destructive">Cerrar sesión</Button>
             </div>
           ) : (

@@ -139,7 +139,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 bg-gradient-to-r botonazul hover:from-blue-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+                className="w-full h-12 bg-gradient-to-r botonazul text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
               >
                 {isLoading ? (
                   <div className="flex items-center space-x-2">

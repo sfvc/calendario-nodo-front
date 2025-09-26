@@ -558,49 +558,57 @@ export const EventForm: React.FC<Props> = ({
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-4">
             {fotosFields.map((field, index) => (
               <div
                 key={field.id}
-                className="relative border rounded-lg p-4 space-y-2"
+                className="relative flex items-center gap-4 border rounded-lg p-4"
               >
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Foto {index + 1}</span>
-                  {!isReadOnly && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFoto(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) =>
-                    handleFotoChange(index, e.target.files?.[0] || null)
-                  }
-                  disabled={isReadOnly}
-                />
-
-                {/* Mostramos la preview: puede ser URL existente o la nueva */}
-                {field.preview && (
-                  <div className="mt-2">
+                {/* Preview a la izquierda */}
+                <div className="w-32 h-24 flex-shrink-0 rounded overflow-hidden bg-muted">
+                  {field.preview ? (
                     <img
                       src={field.preview}
                       alt={`Preview ${index + 1}`}
-                      className="w-full h-32 object-cover rounded"
+                      className="w-full h-full object-cover"
                     />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
+                      Sin imagen
+                    </div>
+                  )}
+                </div>
+
+                {/* Info y acciones a la derecha */}
+                <div className="flex-1 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Foto {index + 1}</span>
+                    {!isReadOnly && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFoto(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
-                )}
+
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) =>
+                      handleFotoChange(index, e.target.files?.[0] || null)
+                    }
+                    disabled={isReadOnly}
+                  />
+                </div>
               </div>
             ))}
           </div>
         </div>
+
 
         {/* Archivos */}
         <div className="space-y-4">

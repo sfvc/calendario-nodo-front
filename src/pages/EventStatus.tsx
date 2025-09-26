@@ -111,7 +111,7 @@ const EstadosEventosPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-8">
-      <div className="flex justify-between items-center mb-6">
+      <div className="estadospage-header flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Estados para Eventos</h1>
         <div className="flex justify-end items-center gap-4">
           <Button className="cursor-pointer" onClick={openCreateModal}>Crear Estado</Button>
